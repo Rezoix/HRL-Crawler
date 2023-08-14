@@ -1,0 +1,9 @@
+- Reduce sleep (room for even less sleep?)
+- Support soft resets 
+	- Not sure if I ended up using this or not
+	- Idea is to not reset env when ray horizon is reached, as horizon is typically 100-1000 steps, while episodes may last for 1000's of steps
+- Horizon has off-by-one bug (fixed)
+- Support setting unique fixed seed for each unity instance
+- Update to ray==2.3.0
+	- e.g., support gymnasium instead of gym
+	- --> use (truncated, terminates) instead of done
