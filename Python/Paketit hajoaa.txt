@@ -1,0 +1,2 @@
+Käytä vain requirements.txt määrittelemiä versioita;
+Muuten tulee ihmeellisiä yhteensopivuusongelmia, mm. import gym valittaa jotain cv2:sta. Liittyy jotenkin stable baselines 3, koska ongelma tulee vastaan sen asentamisen jälkeen

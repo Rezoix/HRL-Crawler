@@ -15,7 +15,7 @@ from stable_baselines3.common.buffers import ReplayBuffer
 from torch.utils.tensorboard import SummaryWriter
 
 from mlagents_envs.environment import UnityEnvironment
-from mlagents_envs.envs.unity_gym_env import UnityToGymWrapper
+from mlagents_envs.envs.unity_gym_env import UnityToGymWrapper 
 
 def parse_args():
     # fmt: off
@@ -71,6 +71,10 @@ def parse_args():
     return args
 
 
+
+
+
+
 def make_env(env_id, seed, idx, capture_video, run_name):
     def thunk():
         """ env = gym.make(env_id)
@@ -81,7 +85,8 @@ def make_env(env_id, seed, idx, capture_video, run_name):
         env.seed(seed)
         env.action_space.seed(seed)
         env.observation_space.seed(seed) """
-        unity_env = UnityEnvironment() #TODO
+        worker_id = 0
+        unity_env = UnityEnvironment(worker_id=worker_id, base_port=5004, timeout_wait=300) #TODO
         env = UnityToGymWrapper(unity_env)
         return env
 
