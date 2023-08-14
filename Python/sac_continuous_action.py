@@ -5,7 +5,8 @@ import random
 import time
 from distutils.util import strtobool
 
-import gym
+import gymnasium as gym
+#import gym
 import numpy as np
 import torch
 import torch.nn as nn
@@ -16,6 +17,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from mlagents_envs.environment import UnityEnvironment
 from mlagents_envs.envs.unity_gym_env import UnityToGymWrapper 
+
+from unity_env import BetterUnity3DEnv
 
 def parse_args():
     # fmt: off
@@ -85,9 +88,10 @@ def make_env(env_id, seed, idx, capture_video, run_name):
         env.seed(seed)
         env.action_space.seed(seed)
         env.observation_space.seed(seed) """
-        worker_id = 0
-        unity_env = UnityEnvironment(worker_id=worker_id, base_port=5004, timeout_wait=300) #TODO
-        env = UnityToGymWrapper(unity_env)
+        #worker_id = 0
+        #unity_env = UnityEnvironment(worker_id=worker_id, base_port=5004, timeout_wait=300) #TODO
+        #env = UnityToGymWrapper(unity_env)
+        env = BetterUnity3DEnv()
         return env
 
     return thunk
@@ -208,6 +212,12 @@ if __name__ == "__main__":
     else:
         alpha = args.alpha
 
+    print(envs.single_observation_space,
+        envs.single_action_space)
+    
+    print(type(envs.single_observation_space),
+        type(envs.single_action_space))
+    
     envs.single_observation_space.dtype = np.float32
     rb = ReplayBuffer(
         args.buffer_size,

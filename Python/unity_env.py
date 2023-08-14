@@ -1,19 +1,35 @@
-from gymnasium.spaces import Box, MultiDiscrete, Tuple as TupleSpace
+from gymnasium.spaces import Box, MultiDiscrete, Space, Tuple as TupleSpace
+import gymnasium as gym
 import logging
 import numpy as np
 import random
 import time
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Dict, Any, List
 
-from ray.rllib.env.multi_agent_env import MultiAgentEnv
-from ray.rllib.policy.policy import PolicySpec
-from ray.rllib.utils.annotations import PublicAPI
-from ray.rllib.utils.typing import MultiAgentDict, PolicyID, AgentID
+#from ray.rllib.env.multi_agent_env import MultiAgentEnv
+#from ray.rllib.policy.policy import PolicySpec
+#from ray.rllib.utils.annotations import PublicAPI
+#from ray.rllib.utils.typing import MultiAgentDict, PolicyID, AgentID
 
 logger = logging.getLogger(__name__)
 
+#RLlib typings
+AgentID = Any
+MultiAgentDict = Dict[AgentID, Any]
 
-@PublicAPI
+class MultiAgentEnv(gym.Env):
+    def __init__(self):
+        super().__init__()
+
+        if not hasattr(self, "observation_space"):
+            self.observation_space = None
+        if not hasattr(self, "action_space"):
+            self.action_space = None
+        if not hasattr(self, "_agent_ids"):
+            self._agent_ids = set()
+    
+
+#@PublicAPI
 class BetterUnity3DEnv(MultiAgentEnv):
     """A MultiAgentEnv representing a single Unity3D game instance.
     For an example on how to use this Env with a running Unity3D editor
@@ -23,7 +39,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
     connects to an RLlib Policy server, see:
     `rllib/examples/serving/unity3d_[client|server].py`
     Supports all Unity3D (MLAgents) examples, multi- or single-agent and
-    gets converted automatically into an ExternalMultiAgentEnv, when used
+    gets converted automatically into an ExternalMultiAgentEnv, when used        self._previous_decision_step = None
     inside an RLlib PolicyClient for cloud/distributed training of Unity games.
     """
 
@@ -33,6 +49,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
     _BASE_PORT_ENVIRONMENT = 5005
     # The worker_id for each environment instance
     _WORKER_ID = 0
+
 
     def __init__(
             self,
@@ -64,6 +81,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
         """
 
         super().__init__()
+
 
         if file_name is None:
             print(
@@ -117,6 +135,44 @@ class BetterUnity3DEnv(MultiAgentEnv):
         self.soft_horizon = soft_horizon
         # Keep track of how many times we have called `step` so far.
         self.episode_timesteps = 0
+
+        # Get env info
+        if not self.unity_env.behavior_specs:
+            self.unity_env.step()
+
+        self.name = list(self.unity_env.behavior_specs.keys())[0]
+        self.group_spec = self.unity_env.behavior_specs[self.name]
+
+        # Check for num of agents
+        self.unity_env.reset()
+        decision_steps, _ = self.unity_env.get_steps(self.name)
+        print(f"{len(decision_steps)} agents found in the environment")
+        self._previous_decision_step = decision_steps
+
+        # Check action spaces (Only for continuous at the moment)
+        if self.group_spec.action_spec.is_continuous():
+            self.action_size = self.group_spec.action_spec.continuous_size
+            high = np.array([1] * self.group_spec.action_spec.continuous_size)
+            self.action_space = Box(-high, high, dtype=np.float32)
+        
+        # Check observation spaces
+        list_spaces: List[gym.Space] = []
+        if self._get_vec_obs_size() > 0:
+            high = np.array([np.inf] * self._get_vec_obs_size())
+            list_spaces.append(Box(-high, high, dtype=np.float32))
+        self.observation_space = list_spaces[0]
+
+
+    def _get_vec_obs_size(self):
+        res = 0
+        for obs_spec in self.group_spec.observation_specs:
+            if len(obs_spec.shape) == 1:
+                res += obs_spec.shape[0]
+        return res
+
+
+
+
 
     def step(
             self, action_dict: MultiAgentDict

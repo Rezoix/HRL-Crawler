@@ -260,12 +260,20 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4845971001588102144, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: agentDoneOnGroundContact
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4845971001715176648, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: m_Model
       value: 
-      objectReference: {fileID: 5022602860645237092, guid: 74718740bc57aa64e8bd4855d2df4d0a, type: 3}
+      objectReference: {fileID: 0}
+    - target: {fileID: 4845971001715176648, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+      propertyPath: m_UseChildSensors
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4845971001715176648, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+      propertyPath: m_BrainParameters.NumStackedVectorObservations
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: TargetPrefab
       value: 
@@ -325,6 +333,10 @@ PrefabInstance:
     - target: {fileID: 4845971001715176662, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: maxJointForceLimit
       value: 50000
+      objectReference: {fileID: 0}
+    - target: {fileID: 4845971001715176663, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+      propertyPath: DecisionPeriod
+      value: 5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
