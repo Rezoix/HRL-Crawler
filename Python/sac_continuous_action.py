@@ -189,6 +189,10 @@ if __name__ == "__main__":
     # env setup
     envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name)])
     assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
+    # TODO: SyncVectorEnv doesnt work with multi-agent? 
+    # Or only the RLlib method where observations are placed into dictionary with all agent names?
+
+
 
 
     max_action = float(envs.single_action_space.high[0])
@@ -239,8 +243,8 @@ if __name__ == "__main__":
             actions = actions.detach().cpu().numpy()
 
         # TRY NOT TO MODIFY: execute the game and log data.
-        next_obs, rewards, dones, infos = envs.step(actions)
-
+        next_obs, rewards, terminateds, truncateds, infos = envs.step(actions)
+        dones = terminateds or truncateds
         # TRY NOT TO MODIFY: record rewards for plotting purposes
         for info in infos:
             if "episode" in info.keys():

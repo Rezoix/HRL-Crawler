@@ -14,8 +14,8 @@ from typing import Callable, Optional, Tuple, Dict, Any, List
 logger = logging.getLogger(__name__)
 
 #RLlib typings
-AgentID = Any
-MultiAgentDict = Dict[AgentID, Any]
+AgentID = str
+MultiAgentDict = Dict[str, Any]
 
 class MultiAgentEnv(gym.Env):
     def __init__(self):
@@ -156,12 +156,25 @@ class BetterUnity3DEnv(MultiAgentEnv):
             self.action_space = Box(-high, high, dtype=np.float32)
         
         # Check observation spaces
-        list_spaces: List[gym.Space] = []
+
+        """ list_spaces: List[gym.Space] = []
+        for obs_spec in self.group_spec.observation_specs:
+            high = np.array([np.inf] * obs_spec.shape[0])
+            list_spaces.append(Box(-high, high, dtype=np.float32))
+        
+        if len(list_spaces) > 1:
+            self.observation_space = TupleSpace(list_spaces)
+        else:
+            self.observation_space = list_spaces[0] """
+
+
         if self._get_vec_obs_size() > 0:
             high = np.array([np.inf] * self._get_vec_obs_size())
-            list_spaces.append(Box(-high, high, dtype=np.float32))
-        self.observation_space = list_spaces[0]
+            self.observation_space = Box(-high, high, dtype=np.float32)
 
+        print(self.observation_space)
+
+        
 
     def _get_vec_obs_size(self):
         res = 0
@@ -248,8 +261,11 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 dict({"__all__": True}, **{agent_id: True for agent_id in all_agents}),
                 infos,
             )
-
-        return obs, rewards, terminateds, truncateds, infos
+        obs_r = obs["Crawler?team=0_0"]
+        rewards_r = rewards["Crawler?team=0_0"]
+        done_r = terminateds["__all__"] or truncateds["__all__"]
+        return obs_r, rewards_r, terminateds["__all__"], truncateds["__all__"], infos
+        #return obs, rewards, terminateds, truncateds, infos
 
     def reset(
             self, *, seed=None, options=None
@@ -260,7 +276,8 @@ class BetterUnity3DEnv(MultiAgentEnv):
             self.unity_env.reset()
         obs, _, _, _, infos = self._get_step_results()
         # print(obs)
-        return obs, infos
+        obs_r = obs["Crawler?team=0_0"]
+        return (obs_r, infos)
 
     def _get_step_results(self):
         """Collects those agents' obs/rewards that have to act in next `step`.
@@ -290,7 +307,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 key = behavior_name + "_{}".format(agent_id)
                 terminateds[key] = False
                 os = tuple(o[idx] for o in decision_steps.obs)
-                os = os[0] if len(os) == 1 else os
+                os = os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32)
                 obs[key] = os
                 rewards[key] = (
                         decision_steps.reward[idx] + decision_steps.group_reward[idx]
