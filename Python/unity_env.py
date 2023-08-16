@@ -261,11 +261,11 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 dict({"__all__": True}, **{agent_id: True for agent_id in all_agents}),
                 infos,
             )
-        obs_r = obs["Crawler?team=0_0"]
-        rewards_r = rewards["Crawler?team=0_0"]
-        done_r = terminateds["__all__"] or truncateds["__all__"]
-        return obs_r, rewards_r, terminateds["__all__"], truncateds["__all__"], infos
-        #return obs, rewards, terminateds, truncateds, infos
+        #obs_r = obs["Crawler?team=0_0"]
+        #rewards_r = rewards["Crawler?team=0_0"]
+        #done_r = terminateds["__all__"] or truncateds["__all__"]
+        #return obs_r, rewards_r, terminateds["__all__"], truncateds["__all__"], infos
+        return obs, rewards, terminateds, truncateds, infos
 
     def reset(
             self, *, seed=None, options=None
@@ -276,8 +276,30 @@ class BetterUnity3DEnv(MultiAgentEnv):
             self.unity_env.reset()
         obs, _, _, _, infos = self._get_step_results()
         # print(obs)
-        obs_r = obs["Crawler?team=0_0"]
-        return (obs_r, infos)
+        #obs_r = obs["Crawler?team=0_0"]
+        return obs, infos
+
+
+    def action_space_sample(self, agent_ids = None):
+        if agent_ids == None:
+            agent_ids = self.get_agent_ids()
+        samples = {}
+        for agent_id in agent_ids:
+            samples[agent_id] = self.action_space.sample()
+        if len(samples) == 0:
+            print("no agents -> no samples???")
+        return samples
+
+
+    def get_agent_ids(self):
+        all_agents = []
+        for behavior_name in self.unity_env.behavior_specs:
+            for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
+                key = behavior_name + "_{}".format(agent_id)
+                all_agents.append(key)
+        if len(all_agents) == 0:
+            print("no agents???") #TODO: FIX, for some reason doesnt always return any agent ids?
+        return all_agents
 
     def _get_step_results(self):
         """Collects those agents' obs/rewards that have to act in next `step`.
@@ -293,7 +315,8 @@ class BetterUnity3DEnv(MultiAgentEnv):
         """
         obs = {}
         rewards = {}
-        terminateds = {"__all__": False}
+        terminateds = {}#{"__all__": False}
+        truncateds = {}
         infos = {}
         i = 0
         for behavior_name in self.unity_env.behavior_specs:
@@ -306,8 +329,12 @@ class BetterUnity3DEnv(MultiAgentEnv):
             for agent_id, idx in decision_steps.agent_id_to_index.items():
                 key = behavior_name + "_{}".format(agent_id)
                 terminateds[key] = False
+
+                #TMP
+                truncateds[key] = False
+
                 os = tuple(o[idx] for o in decision_steps.obs)
-                os = os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32)
+                os = os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32) # Concatenate observations into single array
                 obs[key] = os
                 rewards[key] = (
                         decision_steps.reward[idx] + decision_steps.group_reward[idx]
@@ -318,20 +345,24 @@ class BetterUnity3DEnv(MultiAgentEnv):
             for agent_id, idx in terminal_steps.agent_id_to_index.items():
                 key = behavior_name + "_{}".format(agent_id)
                 terminateds[key] = True
+
+                #TMP
+                truncateds[key] = False
+                
                 # Only overwrite rewards (last reward in episode), b/c obs
                 # here is the last obs (which doesn't matter anyways).
                 # Unless key does not exist in obs.
                 if key not in obs:
                     os = tuple(o[idx] for o in terminal_steps.obs)
-                    obs[key] = os = os[0] if len(os) == 1 else os
+                    obs[key] = os = os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32) # Concatenate observations into single array
                 rewards[key] = (
                         terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
                 )
 
 
         # Only use dones if all agents are done, then we should do a reset.
-        if False not in terminateds.values():
-            terminateds["__all__"] = True
+        #if False not in terminateds.values():
+        #    terminateds["__all__"] = True
             # TODO: How to report that only one agent is done? RLlib seems to crash in this simple situation
-        return obs, rewards, {"__all__": False}, {"__all__": False}, infos
+        return obs, rewards, terminateds, truncateds, infos
         # return obs, rewards, terminateds, {"__all__": False}, infos

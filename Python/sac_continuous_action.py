@@ -20,6 +20,9 @@ from mlagents_envs.envs.unity_gym_env import UnityToGymWrapper
 
 from unity_env import BetterUnity3DEnv
 
+from ray.rllib.utils.replay_buffers.multi_agent_replay_buffer import MultiAgentReplayBuffer
+from ray.rllib.policy.sample_batch import SampleBatch, MultiAgentBatch
+
 def parse_args():
     # fmt: off
     parser = argparse.ArgumentParser()
@@ -51,9 +54,9 @@ def parse_args():
         help="the discount factor gamma")
     parser.add_argument("--tau", type=float, default=0.005,
         help="target smoothing coefficient (default: 0.005)")
-    parser.add_argument("--batch-size", type=int, default=256,
+    parser.add_argument("--batch-size", type=int, default=5,#default=256,
         help="the batch size of sample from the reply memory")
-    parser.add_argument("--learning-starts", type=int, default=5e3,
+    parser.add_argument("--learning-starts", type=int, default=50,#default=5e3,
         help="timestep to start learning")
     parser.add_argument("--policy-lr", type=float, default=3e-4,
         help="the learning rate of the policy network optimizer")
@@ -101,7 +104,7 @@ def make_env(env_id, seed, idx, capture_video, run_name):
 class SoftQNetwork(nn.Module):
     def __init__(self, env):
         super().__init__()
-        self.fc1 = nn.Linear(np.array(env.single_observation_space.shape).prod() + np.prod(env.single_action_space.shape), 256)
+        self.fc1 = nn.Linear(np.array(env.observation_space.shape).prod() + np.prod(env.action_space.shape), 256)
         self.fc2 = nn.Linear(256, 256)
         self.fc3 = nn.Linear(256, 1)
 
@@ -120,10 +123,10 @@ LOG_STD_MIN = -5
 class Actor(nn.Module):
     def __init__(self, env):
         super().__init__()
-        self.fc1 = nn.Linear(np.array(env.single_observation_space.shape).prod(), 256)
+        self.fc1 = nn.Linear(np.array(env.observation_space.shape).prod(), 256)
         self.fc2 = nn.Linear(256, 256)
-        self.fc_mean = nn.Linear(256, np.prod(env.single_action_space.shape))
-        self.fc_logstd = nn.Linear(256, np.prod(env.single_action_space.shape))
+        self.fc_mean = nn.Linear(256, np.prod(env.action_space.shape))
+        self.fc_logstd = nn.Linear(256, np.prod(env.action_space.shape))
         # action rescaling
         self.register_buffer(
             "action_scale", torch.tensor((env.action_space.high - env.action_space.low) / 2.0, dtype=torch.float32)
@@ -152,7 +155,7 @@ class Actor(nn.Module):
         log_prob = normal.log_prob(x_t)
         # Enforcing Action Bound
         log_prob -= torch.log(self.action_scale * (1 - y_t.pow(2)) + 1e-6)
-        log_prob = log_prob.sum(1, keepdim=True)
+        log_prob = log_prob.sum(0, keepdim=True)
         mean = torch.tanh(mean) * self.action_scale + self.action_bias
         return action, log_prob, mean
 
@@ -187,21 +190,22 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name)])
-    assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
+    #envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name)])
+    #assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
     # TODO: SyncVectorEnv doesnt work with multi-agent? 
     # Or only the RLlib method where observations are placed into dictionary with all agent names?
 
+    # For now only use single environment instance at a time
 
+    env = make_env(args.env_id, args.seed, 0, args.capture_video, run_name)()
 
+    max_action = float(env.action_space.high[0])
 
-    max_action = float(envs.single_action_space.high[0])
-
-    actor = Actor(envs).to(device)
-    qf1 = SoftQNetwork(envs).to(device)
-    qf2 = SoftQNetwork(envs).to(device)
-    qf1_target = SoftQNetwork(envs).to(device)
-    qf2_target = SoftQNetwork(envs).to(device)
+    actor = Actor(env).to(device)
+    qf1 = SoftQNetwork(env).to(device)
+    qf2 = SoftQNetwork(env).to(device)
+    qf1_target = SoftQNetwork(env).to(device)
+    qf2_target = SoftQNetwork(env).to(device)
     qf1_target.load_state_dict(qf1.state_dict())
     qf2_target.load_state_dict(qf2.state_dict())
     q_optimizer = optim.Adam(list(qf1.parameters()) + list(qf2.parameters()), lr=args.q_lr)
@@ -209,41 +213,53 @@ if __name__ == "__main__":
 
     # Automatic entropy tuning
     if args.autotune:
-        target_entropy = -torch.prod(torch.Tensor(envs.single_action_space.shape).to(device)).item()
+        target_entropy = -torch.prod(torch.Tensor(env.action_space.shape).to(device)).item()
         log_alpha = torch.zeros(1, requires_grad=True, device=device)
         alpha = log_alpha.exp().item()
         a_optimizer = optim.Adam([log_alpha], lr=args.q_lr)
     else:
         alpha = args.alpha
 
-    print(envs.single_observation_space,
-        envs.single_action_space)
+    print(env.observation_space,
+        env.action_space)
     
-    print(type(envs.single_observation_space),
-        type(envs.single_action_space))
+    print(type(env.observation_space),
+        type(env.action_space))
     
-    envs.single_observation_space.dtype = np.float32
-    rb = ReplayBuffer(
+    env.observation_space.dtype = np.float32
+    """ rb = ReplayBuffer(
         args.buffer_size,
-        envs.single_observation_space,
-        envs.single_action_space,
+        env.observation_space,
+        env.action_space,
         device,
-        handle_timeout_termination=True,
+        handle_timeout_termination=False, #testing
+    ) """
+
+    rb = MultiAgentReplayBuffer(
+        capacity=args.buffer_size,
+
     )
     start_time = time.time()
 
     # TRY NOT TO MODIFY: start the game
-    obs = envs.reset()
+    obs,_ = env.reset()
+
+    # envs.reset() returns array of two arrays, with second one being empty. Why?
+    # Work around it for now... It seems like it could be the 'infos'?
+    #obs = obs[0]
     for global_step in range(args.total_timesteps):
         # ALGO LOGIC: put action logic here
         if global_step < args.learning_starts:
-            actions = np.array([envs.single_action_space.sample() for _ in range(envs.num_envs)])
+            #actions = np.array([envs.single_action_space.sample() for _ in range(envs.num_envs)])
+            actions = env.action_space_sample()
         else:
-            actions, _, _ = actor.get_action(torch.Tensor(obs).to(device))
-            actions = actions.detach().cpu().numpy()
+            actions = {}
+            for agent_id in obs:
+                act, _, _ = actor.get_action(torch.Tensor(obs[agent_id]).to(device))
+                actions[agent_id] = act.detach().cpu().numpy()
 
         # TRY NOT TO MODIFY: execute the game and log data.
-        next_obs, rewards, terminateds, truncateds, infos = envs.step(actions)
+        next_obs, rewards, terminateds, truncateds, infos = env.step(actions)
         dones = terminateds or truncateds
         # TRY NOT TO MODIFY: record rewards for plotting purposes
         for info in infos:
@@ -255,10 +271,37 @@ if __name__ == "__main__":
 
         # TRY NOT TO MODIFY: save data to reply buffer; handle `terminal_observation`
         real_next_obs = next_obs.copy()
-        for idx, d in enumerate(dones):
-            if d:
-                real_next_obs[idx] = infos[idx]["terminal_observation"]
-        rb.add(obs, real_next_obs, actions, rewards, dones, infos)
+        """ for agent_id in dones:
+            done = dones[agent_id]
+            if done:
+                real_next_obs[agent_id] = infos[agent_id]["terminal_observation"] """
+        
+        sampleBatches = {}
+        for agent_id in obs:
+            sampleBatches[agent_id] = SampleBatch({
+                "obs": [obs[agent_id]], 
+                "new_obs": [real_next_obs[agent_id]], 
+                "rewards": [rewards[agent_id]], 
+                "actions": [actions[agent_id]],
+                "terminateds": [terminateds[agent_id]],
+                "truncateds": [truncateds[agent_id]]
+                })
+        multiBatches = MultiAgentBatch(sampleBatches, 1)
+        
+        """ batch = SampleBatch({
+            "obs": obs, 
+            "new_obs": real_next_obs, 
+            "rewards": rewards, 
+            "actions": actions,
+            "terminateds": terminateds,
+            "truncateds": truncateds
+        })
+
+        print(batch["rewards"])
+
+        rb.add(batch) """
+
+        #rb.add(obs, real_next_obs, actions, rewards, dones, infos)
 
         # TRY NOT TO MODIFY: CRUCIAL step easy to overlook
         obs = next_obs
@@ -327,5 +370,5 @@ if __name__ == "__main__":
                 if args.autotune:
                     writer.add_scalar("losses/alpha_loss", alpha_loss.item(), global_step)
 
-    envs.close()
+    env.close()
     writer.close()
