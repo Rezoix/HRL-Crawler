@@ -294,11 +294,20 @@ class BetterUnity3DEnv(MultiAgentEnv):
     def get_agent_ids(self):
         all_agents = []
         for behavior_name in self.unity_env.behavior_specs:
-            for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
-                key = behavior_name + "_{}".format(agent_id)
+            ids = []
+            for step in self.unity_env.get_steps(behavior_name):
+                for agent_id in step.agent_id:
+                    ids.append(agent_id)
+            for id in ids:
+                key = behavior_name + "_{}".format(id)
                 all_agents.append(key)
         if len(all_agents) == 0:
             print("no agents???") #TODO: FIX, for some reason doesnt always return any agent ids?
+            bns = self.unity_env.behavior_specs
+            for bn in bns:
+                steps = self.unity_env.get_steps(bn)
+
+            print(".")
         return all_agents
 
     def _get_step_results(self):

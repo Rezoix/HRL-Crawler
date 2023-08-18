@@ -287,7 +287,7 @@ if __name__ == "__main__":
                 "truncateds": [truncateds[agent_id]]
                 })
         multiBatches = MultiAgentBatch(sampleBatches, 1)
-        
+        rb.add(multiBatches)
         """ batch = SampleBatch({
             "obs": obs, 
             "new_obs": real_next_obs, 
