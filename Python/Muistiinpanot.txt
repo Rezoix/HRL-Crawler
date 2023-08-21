@@ -1,0 +1,20 @@
+Käytä vain requirements.txt määrittelemiä versioita;
+Muuten tulee ihmeellisiä yhteensopivuusongelmia, mm. import gym valittaa jotain cv2:sta. 
+Liittyy jotenkin stable baselines 3, koska ongelma tulee vastaan sen asentamisen jälkeen
+
+updt. Uusi stable baselines3 käyttää gymnasiumia ja cleanrl alunperin käyttää gymia. 
+Ilmeisesti gym + gymnasium asentaminen hajoittaa import gymin.
+
+
+#### 21.8 ####
+Unity environmentin "get_steps" komento palauttaa envin staten. Jos agentin decision period (määritelty unityssä) on yli 1,
+jokaisella training stepillä pythonin puolella ei välttämättä siltä agentilta tule mitään decision pyyntöä.
+-> Joissain stepeissä ei tule mitään observaatioita tai vain osalta agenteista tulee observaatio.
+Tällä hetkellä käyttämällä pelkästään decision period = 1 koodi toimii.
+
+Tällä hetkellä koodi käyttää rllib menetelmää erotella agentit ("Crawler?team0_0" tms. avaimilla dictionaryssä).
+Periaatteessa toimii, mutta todennäköisesti aiheuttaa melkoisia perffiongelmia pythonin puolella.
+Lisäksi tällä hetkellä replay-bufferin samplejen tallennus on kyseenalainen. Unity pyörii ~1fps 2. agentilla -> about 1 training step per sekunti?
+Pitää testata profilerilla mikä tuossa kestää todellisuudessa, yksi varmaan on torch-numpy-torch muunnokset unity envin takia
+
+

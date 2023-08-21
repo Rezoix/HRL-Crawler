@@ -1,6 +1,0 @@
-Käytä vain requirements.txt määrittelemiä versioita;
-Muuten tulee ihmeellisiä yhteensopivuusongelmia, mm. import gym valittaa jotain cv2:sta. 
-Liittyy jotenkin stable baselines 3, koska ongelma tulee vastaan sen asentamisen jälkeen
-
-updt. Uusi stable baselines3 käyttää gymnasiumia ja cleanrl alunperin käyttää gymia. 
-Ilmeisesti gym + gymnasium asentaminen hajoittaa import gymin.

@@ -251,20 +251,17 @@ class BetterUnity3DEnv(MultiAgentEnv):
         obs, rewards, terminateds, truncateds, infos = self._get_step_results()
 
         # Global horizon reached? -> Return __all__ truncated=True, so user
-        # can reset. Set all agents' individual `truncated` to True as well.
+        # can reset. Set all agents' individual `trunepisode_horizoncated` to True as well.
         self.episode_timesteps += 1
         if self.episode_timesteps >= self.episode_horizon:
             return (
                 obs,
                 rewards,
                 terminateds,
-                dict({"__all__": True}, **{agent_id: True for agent_id in all_agents}),
+                dict({"__all__": 1}, **{agent_id: 1 for agent_id in all_agents}),
                 infos,
             )
-        #obs_r = obs["Crawler?team=0_0"]
-        #rewards_r = rewards["Crawler?team=0_0"]
-        #done_r = terminateds["__all__"] or truncateds["__all__"]
-        #return obs_r, rewards_r, terminateds["__all__"], truncateds["__all__"], infos
+
         return obs, rewards, terminateds, truncateds, infos
 
     def reset(
@@ -337,10 +334,10 @@ class BetterUnity3DEnv(MultiAgentEnv):
             # print(decision_steps.agent_id_to_index.items())
             for agent_id, idx in decision_steps.agent_id_to_index.items():
                 key = behavior_name + "_{}".format(agent_id)
-                terminateds[key] = False
+                terminateds[key] = 0
 
                 #TMP
-                truncateds[key] = False
+                truncateds[key] = 0
 
                 os = tuple(o[idx] for o in decision_steps.obs)
                 os = os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32) # Concatenate observations into single array
@@ -353,10 +350,10 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 i += 1
             for agent_id, idx in terminal_steps.agent_id_to_index.items():
                 key = behavior_name + "_{}".format(agent_id)
-                terminateds[key] = True
+                terminateds[key] = 1
 
                 #TMP
-                truncateds[key] = False
+                truncateds[key] = 0
                 
                 # Only overwrite rewards (last reward in episode), b/c obs
                 # here is the last obs (which doesn't matter anyways).
