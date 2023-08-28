@@ -401,7 +401,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4845971001715176663, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: DecisionPeriod
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -613,7 +613,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4845971001715176663, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: DecisionPeriod
-      value: 5
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
