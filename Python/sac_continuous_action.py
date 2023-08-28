@@ -21,6 +21,7 @@ from mlagents_envs.envs.unity_gym_env import UnityToGymWrapper
 from unity_env import BetterUnity3DEnv
 
 from ray.rllib.utils.replay_buffers.multi_agent_replay_buffer import MultiAgentReplayBuffer
+from ray.rllib.utils.replay_buffers.replay_buffer import ReplayBuffer as RReplayBuffer
 from ray.rllib.policy.sample_batch import SampleBatch, MultiAgentBatch
 
 def parse_args():
@@ -54,9 +55,9 @@ def parse_args():
         help="the discount factor gamma")
     parser.add_argument("--tau", type=float, default=0.005,
         help="target smoothing coefficient (default: 0.005)")
-    parser.add_argument("--batch-size", type=int, default=5,#default=256,
+    parser.add_argument("--batch-size", type=int, default=256,
         help="the batch size of sample from the reply memory")
-    parser.add_argument("--learning-starts", type=int, default=100,#default=5e3,
+    parser.add_argument("--learning-starts", type=int, default=5e3,
         help="timestep to start learning")
     parser.add_argument("--policy-lr", type=float, default=3e-4,
         help="the learning rate of the policy network optimizer")
@@ -248,22 +249,20 @@ if __name__ == "__main__":
     print(env.observation_space,
         env.action_space)
     
-    print(type(env.observation_space),
-        type(env.action_space))
     
     env.observation_space.dtype = np.float32
-    """ rb = ReplayBuffer(
+    rb = ReplayBuffer(
         args.buffer_size,
         env.observation_space,
         env.action_space,
         device,
+        n_envs=env.n_agents,
         handle_timeout_termination=False, #testing
-    ) """
-
-    rb = MultiAgentReplayBuffer(
-        capacity=args.buffer_size,
-
     )
+
+    """ rb = RReplayBuffer(
+        capacity=args.buffer_size,
+    ) """
     start_time = time.time()
 
     # TRY NOT TO MODIFY: start the game
@@ -278,14 +277,16 @@ if __name__ == "__main__":
             #actions = np.array([envs.single_action_space.sample() for _ in range(envs.num_envs)])
             actions = env.action_space_sample()
         else:
-            actions = {}
+            actions, _, _ = actor.get_action(torch.tensor(obs, device=device))
+            actions = actions.detach().cpu().numpy()
+            """ actions = {}
             for agent_id in obs:
-                act, _, _ = actor.get_action(torch.Tensor([obs[agent_id]]).to(device))
-                actions[agent_id] = act.detach().cpu().numpy()[0]
+                act, _, _ = actor.get_action(torch.tensor(obs[agent_id], device=device))
+                actions[agent_id] = act.detach().cpu().numpy()[0] """
 
         # TRY NOT TO MODIFY: execute the game and log data.
         next_obs, rewards, terminateds, truncateds, infos = env.step(actions)
-        dones = terminateds or truncateds
+        dones = np.any([terminateds, truncateds], axis=0) * 1
         # TRY NOT TO MODIFY: record rewards for plotting purposes
         for info in infos:
             if "episode" in info.keys():
@@ -300,74 +301,61 @@ if __name__ == "__main__":
             done = dones[agent_id]
             if done:
                 real_next_obs[agent_id] = infos[agent_id]["terminal_observation"] """
-        
-        sampleBatches = {}
+
+        """ sampleBatches = {}
         for agent_id in obs:
             sampleBatches[agent_id] = SampleBatch({
-                "obs": torch.tensor([obs[agent_id]], device=device), 
-                "new_obs": torch.tensor([real_next_obs[agent_id]], device=device), 
-                "rewards": torch.tensor([rewards[agent_id]], device=device), 
-                "actions": torch.tensor([actions[agent_id]], device=device),
-                "terminateds": torch.tensor([terminateds[agent_id]], device=device),
-                "truncateds": torch.tensor([truncateds[agent_id]], device=device)
+                "obs": torch.tensor(obs[agent_id], device=device), 
+                "next_obs": torch.tensor(real_next_obs[agent_id], device=device), 
+                "rewards": torch.tensor(rewards[agent_id], device=device), 
+                "actions": torch.tensor(actions[agent_id], device=device),
+                "terminateds": torch.tensor(terminateds[agent_id], device=device),
+                "truncateds": torch.tensor(truncateds[agent_id], device=device)
                 })
-        multiBatches = MultiAgentBatch(sampleBatches, 1)
+        multiBatches = MultiAgentBatch(sampleBatches, 1) 
         rb.add(multiBatches)
-        """ batch = SampleBatch({
-            "obs": obs, 
-            "new_obs": real_next_obs, 
-            "rewards": rewards, 
-            "actions": actions,
-            "terminateds": terminateds,
-            "truncateds": truncateds
+        """
+
+        """ sampleBatch = SampleBatch({
+            "obs": torch.tensor(obs, device=device),
+            "next_obs": torch.tensor(real_next_obs, device=device),
+            "rewards": torch.tensor(rewards, device=device),
+            "actions": torch.tensor(actions, device=device),
+            "terminateds": torch.tensor(terminateds, device=device),
+            "truncateds": torch.tensor(truncateds, device=device)
         })
+        rb.add(sampleBatch) """
 
-        print(batch["rewards"])
+        rb.add(obs, real_next_obs, actions, rewards, dones, infos)
 
-        rb.add(batch) """
-
-        #rb.add(obs, real_next_obs, actions, rewards, dones, infos)
+        """ rb.add(torch.tensor(obs, device=device),
+            torch.tensor(real_next_obs, device=device),
+            torch.tensor(actions, device=device),
+            torch.tensor(rewards, device=device),
+            dones,
+            infos) """
 
         # TRY NOT TO MODIFY: CRUCIAL step easy to ovelog_alpharlook
         """ for agent_id in next_obs:
             obs[agent_id] = next_obs[agent_id] """
         obs = next_obs
 
+
         # ALGO LOGIC: training.
         if global_step > args.learning_starts:
             data = rb.sample(args.batch_size)
             with torch.no_grad():
-                rb_new_obs = {k: v["new_obs"] for (k,v) in data.policy_batches.items()}
-                rb_obs = {k: v["obs"] for (k,v) in data.policy_batches.items()}
-                rb_act = {k: v["actions"] for (k,v) in data.policy_batches.items()}
+                next_state_actions, next_state_log_pi, _ = actor.get_action(data.next_observations)
+                qf1_next_target = qf1_target(data.next_observations, next_state_actions)
+                qf2_next_target = qf2_target(data.next_observations, next_state_actions)
+                min_qf_next_target = torch.min(qf1_next_target, qf2_next_target) - alpha * next_state_log_pi
+                next_q_value = data.rewards.flatten() + (1 - data.dones.flatten()) * args.gamma * (min_qf_next_target).view(-1)
 
-                next_state_actions, next_state_log_pi, _ = actor.get_actions(rb_new_obs)
-                qf1_next_target = qf1_target.forwards(rb_new_obs, next_state_actions)
-                qf2_next_target = qf2_target.forwards(rb_new_obs, next_state_actions)
-                #min_qf_next_target = torch.min(qf1_next_target, qf2_next_target) - alpha * next_state_log_pi
-                min_qf_next_target = {}
-                for agent_id in qf1_next_target:
-                    min_qf_next_target[agent_id] = torch.min(qf1_next_target[agent_id], qf2_next_target[agent_id]) - alpha * next_state_log_pi[agent_id]
-                
-                #next_q_value = data.rewards.flatten() + (1 - data.dones.flatten()) * args.gamma * (min_qf_next_target).view(-1)
-                next_q_value = {}
-                for agent_id in data.policy_batches:
-                    batch = data.policy_batches[agent_id]
-                    re = batch["rewards"].flatten()
-                    te = (1 - batch["terminateds"].flatten()) * args.gamma
-                    mqf = (min_qf_next_target[agent_id]).view(-1)
-                    next_q_value[agent_id] = re + te * mqf
-                    #next_q_value[agent_id] = batch["rewards"].flatten() + (1 - batch["terminateds"].flatten()) * args.gamma * (min_qf_next_target[agent_id]).view(-1)
-
-            qf1_a_values = {k: v.view(-1) for (k,v) in qf1.forwards(rb_obs, rb_act).items()}
-            qf2_a_values = {k: v.view(-1) for (k,v) in qf2.forwards(rb_obs, rb_act).items()}
-            qf1_loss = {k: F.mse_loss(qf1_a_values[k], next_q_value[k]) for k in next_q_value}
-            qf2_loss = {k: F.mse_loss(qf2_a_values[k], next_q_value[k]) for k in next_q_value}
-            qf_losses = [qf1_loss[k] + qf2_loss[k] for k in qf1_loss]
-            qf_loss = 0
-            for qfl in qf_losses:
-                qf_loss += qfl
-            qf_loss /= len(qf_losses)
+            qf1_a_values = qf1(data.observations, data.actions).view(-1)
+            qf2_a_values = qf2(data.observations, data.actions).view(-1)
+            qf1_loss = F.mse_loss(qf1_a_values, next_q_value)
+            qf2_loss = F.mse_loss(qf2_a_values, next_q_value)
+            qf_loss = qf1_loss + qf2_loss
 
             q_optimizer.zero_grad()
             qf_loss.backward()
@@ -377,19 +365,11 @@ if __name__ == "__main__":
                 for _ in range(
                     args.policy_frequency
                 ):  # compensate for the delay by doing 'actor_update_interval' instead of 1
-                    pi, log_pi, _ = actor.get_actions(rb_obs)
-                    qf1_pi = qf1.forwards(rb_obs, pi)
-                    qf2_pi = qf2.forwards(rb_obs, pi)
-                    #min_qf_pi = torch.min(qf1_pi, qf2_pi).view(-1)
-                    min_qf_pi = {}
-                    for agent_id in qf1_pi:
-                        min_qf_pi[agent_id] = torch.min(qf1_pi[agent_id], qf2_pi[agent_id]).view(-1)
-                    
-                    #actor_loss = ((alpha * log_pi) - min_qf_pi).mean()
-                    actor_loss = 0
-                    for agent_id in min_qf_pi:
-                        actor_loss += ((alpha * log_pi[agent_id]) - min_qf_pi[agent_id]).mean()
-                    actor_loss /= len(min_qf_pi)
+                    pi, log_pi, _ = actor.get_action(data.observations)
+                    qf1_pi = qf1(data.observations, pi)
+                    qf2_pi = qf2(data.observations, pi)
+                    min_qf_pi = torch.min(qf1_pi, qf2_pi).view(-1)
+                    actor_loss = ((alpha * log_pi) - min_qf_pi).mean()
 
                     actor_optimizer.zero_grad()
                     actor_loss.backward()
@@ -397,12 +377,8 @@ if __name__ == "__main__":
 
                     if args.autotune:
                         with torch.no_grad():
-                            _, log_pi, _ = actor.get_actions(rb_obs)
-                        #alpha_loss = (-log_alpha * (log_pi + target_entropy)).mean()
-                        alpha_loss = 0
-                        for agent_id in log_pi:
-                            alpha_loss += (-log_alpha * (log_pi[agent_id] +target_entropy)).mean()
-                        alpha_loss /= len(log_pi)
+                            _, log_pi, _ = actor.get_action(data.observations)
+                        alpha_loss = (-log_alpha * (log_pi + target_entropy)).mean()
 
                         a_optimizer.zero_grad()
                         alpha_loss.backward()
@@ -416,7 +392,20 @@ if __name__ == "__main__":
                 for param, target_param in zip(qf2.parameters(), qf2_target.parameters()):
                     target_param.data.copy_(args.tau * param.data + (1 - args.tau) * target_param.data)
 
-            """ if global_step % 100 == 0:
+            if global_step % 100 == 0:
+                print(f"step:       {global_step}")
+                print(f"qf1_values: {qf1_a_values.mean().item()}")
+                print(f"qf2_values: {qf2_a_values.mean().item()}")
+                print(f"qf1_loss:   {qf1_loss.item()}")
+                print(f"qf2_loss:   {qf2_loss.item()}")
+                print(f"qf_loss:    {qf_loss.item() / 2.0}")
+                print(f"actor_loss: {actor_loss.item()}")
+                print(f"alpha:      {alpha}")
+                print(f"SPS:        {int(global_step / (time.time() - start_time))}")
+                print("\n\n\n")
+
+        """ 
+            if global_step % 100 == 0:
                 writer.add_scalar("losses/qf1_values", qf1_a_values.mean().item(), global_step)
                 writer.add_scalar("losses/qf2_values", qf2_a_values.mean().item(), global_step)
                 writer.add_scalar("losses/qf1_loss", qf1_loss.item(), global_step)
@@ -428,6 +417,58 @@ if __name__ == "__main__":
                 writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
                 if args.autotune:
                     writer.add_scalar("losses/alpha_loss", alpha_loss.item(), global_step) """
+        
+
+        # Training logic with RAY Replaybuffers.
+        """ if global_step > args.learning_starts:
+            data = rb.sample(args.batch_size)
+            with torch.no_grad():
+                next_state_actions, next_state_log_pi, _ = actor.get_action(data["next_obs"])
+                qf1_next_target = qf1_target(data["next_obs"], next_state_actions)
+                qf2_next_target = qf2_target(data["next_obs"], next_state_actions)
+                min_qf_next_target = torch.min(qf1_next_target, qf2_next_target) - alpha * next_state_log_pi
+                next_q_value = data["rewards"].flatten() + (1 - data["terminateds"].flatten()) * args.gamma * (min_qf_next_target).view(-1)
+
+            qf1_a_values = qf1(data["obs"], data["actions"]).view(-1)
+            qf2_a_values = qf2(data["obs"], data["actions"]).view(-1)
+            qf1_loss = F.mse_loss(qf1_a_values, next_q_value)
+            qf2_loss = F.mse_loss(qf2_a_values, next_q_value)
+            qf_loss = qf1_loss + qf2_loss
+
+            q_optimizer.zero_grad()
+            qf_loss.backward()
+            q_optimizer.step()
+
+            if global_step % args.policy_frequency == 0:  # TD 3 Delayed update support
+                for _ in range(
+                    args.policy_frequency
+                ):  # compensate for the delay by doing 'actor_update_interval' instead of 1
+                    pi, log_pi, _ = actor.get_action(data["obs"])
+                    qf1_pi = qf1(data["obs"], pi)
+                    qf2_pi = qf2(data["obs"], pi)
+                    min_qf_pi = torch.min(qf1_pi, qf2_pi).view(-1)
+                    actor_loss = ((alpha * log_pi) - min_qf_pi).mean()
+
+                    actor_optimizer.zero_grad()
+                    actor_loss.backward()
+                    actor_optimizer.step()
+
+                    if args.autotune:
+                        with torch.no_grad():
+                            _, log_pi, _ = actor.get_action(data["obs"])
+                        alpha_loss = (-log_alpha * (log_pi + target_entropy)).mean()
+
+                        a_optimizer.zero_grad()
+                        alpha_loss.backward()
+                        a_optimizer.step()
+                        alpha = log_alpha.exp().item()
+
+            # update the target networks
+            if global_step % args.target_network_frequency == 0:
+                for param, target_param in zip(qf1.parameters(), qf1_target.parameters()):
+                    target_param.data.copy_(args.tau * param.data + (1 - args.tau) * target_param.data)
+                for param, target_param in zip(qf2.parameters(), qf2_target.parameters()):
+                    target_param.data.copy_(args.tau * param.data + (1 - args.tau) * target_param.data) """
 
     env.close()
     writer.close()

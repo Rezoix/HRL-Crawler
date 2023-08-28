@@ -147,6 +147,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
         self.unity_env.reset()
         decision_steps, _ = self.unity_env.get_steps(self.name)
         print(f"{len(decision_steps)} agents found in the environment")
+        self.n_agents = len(decision_steps)
         self._previous_decision_step = decision_steps
 
         # Check action spaces (Only for continuous at the moment)
@@ -167,12 +168,12 @@ class BetterUnity3DEnv(MultiAgentEnv):
         else:
             self.observation_space = list_spaces[0] """
 
-
-        if self._get_vec_obs_size() > 0:
-            high = np.array([np.inf] * self._get_vec_obs_size())
+        self.obs_dim = self._get_vec_obs_size()
+        if self.obs_dim > 0:
+            high = np.array([np.inf] * self.obs_dim)
             self.observation_space = Box(-high, high, dtype=np.float32)
 
-        print(self.observation_space)
+        
 
         
 
@@ -218,8 +219,8 @@ class BetterUnity3DEnv(MultiAgentEnv):
             if self.api_version[0] > 1 or (
                     self.api_version[0] == 1 and self.api_version[1] >= 4
             ):
-                actions = []
-                for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
+                actions = action_dict
+                """ for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
                     key = behavior_name + "_{}".format(agent_id)
                     all_agents.append(key)
                     # print(key)
@@ -227,8 +228,8 @@ class BetterUnity3DEnv(MultiAgentEnv):
                     if key not in action_dict:
                         print("nokey")
                     else:
-                        actions.append(action_dict[key])
-                if actions:
+                        actions.append(action_dict[key]) """
+                if actions.size > 0:
                     if actions[0].dtype == np.float32:
                         action_tuple = ActionTuple(continuous=np.array(actions))
                     else:
@@ -258,7 +259,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 obs,
                 rewards,
                 terminateds,
-                dict({"__all__": 1}, **{agent_id: 1 for agent_id in all_agents}),
+                [1 for _ in range(self.n_agents)], #dict({"__all__": 1}, **{agent_id: 1 for agent_id in all_agents}),
                 infos,
             )
 
@@ -272,15 +273,13 @@ class BetterUnity3DEnv(MultiAgentEnv):
         if not self.soft_horizon:
             self.unity_env.reset()
         obs, _, _, _, infos = self._get_step_results()
-        # print(obs)
-        #obs_r = obs["Crawler?team=0_0"]
         return obs, infos
 
 
     def action_space_sample(self, agent_ids = None):
         if agent_ids == None:
             agent_ids = self.get_agent_ids()
-        samples = {}
+        samples = np.empty((self.n_agents, self.action_size), dtype=np.float32)
         for agent_id in agent_ids:
             samples[agent_id] = self.action_space.sample()
         if len(samples) == 0:
@@ -291,20 +290,11 @@ class BetterUnity3DEnv(MultiAgentEnv):
     def get_agent_ids(self):
         all_agents = []
         for behavior_name in self.unity_env.behavior_specs:
-            ids = []
             for step in self.unity_env.get_steps(behavior_name):
                 for agent_id in step.agent_id:
-                    ids.append(agent_id)
-            for id in ids:
-                key = behavior_name + "_{}".format(id)
-                all_agents.append(key)
+                    all_agents.append(agent_id)
         if len(all_agents) == 0:
-            print("no agents???") #TODO: FIX, for some reason doesnt always return any agent ids?
-            bns = self.unity_env.behavior_specs
-            for bn in bns:
-                steps = self.unity_env.get_steps(bn)
-
-            print(".")
+            print("no agents???")
         return all_agents
 
     def _get_step_results(self):
@@ -319,11 +309,11 @@ class BetterUnity3DEnv(MultiAgentEnv):
                     __all__=True, if episode is done for all agents.
                 infos: An (empty) info dict.
         """
-        obs = {}
-        rewards = {}
-        terminateds = {}#{"__all__": False}
-        truncateds = {}
-        infos = {}
+        obs = np.empty((self.n_agents, self.obs_dim), dtype=np.float32)
+        rewards = np.empty(self.n_agents, dtype=np.float32)
+        terminateds = np.empty(self.n_agents, dtype=int)#{"__all__": False}
+        truncateds = np.empty(self.n_agents, dtype=int)
+        infos = np.full(self.n_agents, {})
         i = 0
         for behavior_name in self.unity_env.behavior_specs:
             decision_steps, terminal_steps = self.unity_env.get_steps(behavior_name)
@@ -333,35 +323,35 @@ class BetterUnity3DEnv(MultiAgentEnv):
             # information we have.
             # print(decision_steps.agent_id_to_index.items())
             for agent_id, idx in decision_steps.agent_id_to_index.items():
-                key = behavior_name + "_{}".format(agent_id)
-                terminateds[key] = 0
+                #key = behavior_name + "_{}".format(agent_id)
+                terminateds[agent_id] = 0
 
                 #TMP
-                truncateds[key] = 0
+                truncateds[agent_id] = 0
 
                 os = tuple(o[idx] for o in decision_steps.obs)
                 os = os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32) # Concatenate observations into single array
-                obs[key] = os
-                rewards[key] = (
+                obs[agent_id] = os
+                rewards[agent_id] = (
                         decision_steps.reward[idx] + decision_steps.group_reward[idx]
                 )
                 # print(f"{key}, {rewards[key]}, {decision_steps.group_reward[idx]}")
                 # print(i)
                 i += 1
             for agent_id, idx in terminal_steps.agent_id_to_index.items():
-                key = behavior_name + "_{}".format(agent_id)
-                terminateds[key] = 1
+                #key = behavior_name + "_{}".format(agent_id)
+                terminateds[agent_id] = 1
 
                 #TMP
-                truncateds[key] = 0
+                truncateds[agent_id] = 0
                 
                 # Only overwrite rewards (last reward in episode), b/c obs
                 # here is the last obs (which doesn't matter anyways).
                 # Unless key does not exist in obs.
-                if key not in obs:
+                if agent_id not in obs:
                     os = tuple(o[idx] for o in terminal_steps.obs)
-                    obs[key] = os = os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32) # Concatenate observations into single array
-                rewards[key] = (
+                    obs[agent_id] = os = os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32) # Concatenate observations into single array
+                rewards[agent_id] = (
                         terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
                 )
 
