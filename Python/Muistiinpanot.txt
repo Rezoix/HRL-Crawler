@@ -18,3 +18,17 @@ Lisäksi tällä hetkellä replay-bufferin samplejen tallennus on kyseenalainen.
 Pitää testata profilerilla mikä tuossa kestää todellisuudessa, yksi varmaan on torch-numpy-torch muunnokset unity envin takia
 
 
+#### 28.8 #### 
+SAC ei välttämättä ole hyvä vaihtoehto tässä? Kouluttaminen ei tunnu edistyvän, edes ~150k training stepin jälkeen.
+Hidas fps johtuu varsinaisesta koulutuksesta; ns. alkuperäinen cleanrl toteutus on myös hidas, koska jokaisella training stepillä 
+sampletaan defaulttina 256 aikaisempaa steppiä. CleanRL PPO koodi testiin.
+
+
+#### 30.8 ####
+PPO koulutus toimii huomattavasti nopeammin, unity pyörii mlagents Crawler ympäristössä 10 agentilla ~300fps, eli koulutus ei bottleneckkaa
+perffiä merkittävästi. 
+
+Kouluttaminen ei kuitenkaan tunnu edistyvän myöskään PPO:lla. Ilmeisesti ongelma on että on käytössä decision period = 1 joka johtaa
+että jokaisella unity framella(? vai physics step?) Unity requestaa stepin. Netissä (esim. https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/3-unity-ml-agents-on-arm-how-we-created-game-ai)
+mainitaan että liian pieni decision period voi negatiivisesti vaikuttaa toimintaan. Pitää koittaa saada korjattua toimimaan, niin että
+jokainen steppi ei palauta observaatiota ja ei anneta actionia.

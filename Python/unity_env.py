@@ -313,7 +313,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
         rewards = np.empty(self.n_agents, dtype=np.float32)
         terminateds = np.empty(self.n_agents, dtype=int)#{"__all__": False}
         truncateds = np.empty(self.n_agents, dtype=int)
-        infos = np.full(self.n_agents, {})
+        infos = {}
         i = 0
         for behavior_name in self.unity_env.behavior_specs:
             decision_steps, terminal_steps = self.unity_env.get_steps(behavior_name)
