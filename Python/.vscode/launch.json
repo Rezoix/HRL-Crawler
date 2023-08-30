@@ -5,12 +5,21 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Profiler",
+            "type": "python",
+            "request": "launch",
+            "module": "cProfile",
+            "args":[
+                "-o", "${workspaceFolder}/tmp.prof", "${workspaceFolder}/sac_continuous_action.py"
+            ]
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/sac_continuous_action.py",
+            "program": "${workspaceFolder}/ppo_continuous_action.py",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
         }
     ]
 }
