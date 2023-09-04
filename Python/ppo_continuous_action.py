@@ -45,7 +45,7 @@ def parse_args():
         help="the learning rate of the optimizer")
     parser.add_argument("--num-envs", type=int, default=1,
         help="the number of parallel game environments")
-    parser.add_argument("--num-steps", type=int, default=2048,
+    parser.add_argument("--num-steps", type=int, default=20480,
         help="the number of steps to run in each environment per policy rollout")
     parser.add_argument("--anneal-lr", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
         help="Toggle learning rate annealing for policy and value networks")
@@ -55,7 +55,7 @@ def parse_args():
         help="the lambda for the general advantage estimation")
     parser.add_argument("--num-minibatches", type=int, default=32,
         help="the number of mini-batches")
-    parser.add_argument("--update-epochs", type=int, default=10,
+    parser.add_argument("--update-epochs", type=int, default=3,
         help="the K epochs to update the policy")
     parser.add_argument("--norm-adv", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
         help="Toggles advantages normalization")
@@ -110,20 +110,28 @@ class Agent(nn.Module):
     def __init__(self, env):
         super().__init__()
         self.critic = nn.Sequential(
-            layer_init(nn.Linear(np.array(env.observation_space.shape).prod(), 256)),
+            layer_init(nn.Linear(np.array(env.single_observation_space.shape[1]).prod(), 512)),
             nn.Tanh(),
-            layer_init(nn.Linear(256, 256)),
+            layer_init(nn.Linear(512, 512)),
             nn.Tanh(),
-            layer_init(nn.Linear(256, 1), std=1.0),
+            layer_init(nn.Linear(512, 512)),
+            nn.Tanh(),
+            layer_init(nn.Linear(512, 512)),
+            nn.Tanh(),
+            layer_init(nn.Linear(512, 1), std=1.0),
         )
         self.actor_mean = nn.Sequential(
-            layer_init(nn.Linear(np.array(env.observation_space.shape).prod(), 256)),
+            layer_init(nn.Linear(np.array(env.single_observation_space.shape[1]).prod(), 512)),
             nn.Tanh(),
-            layer_init(nn.Linear(256, 256)),
+            layer_init(nn.Linear(512, 512)),
             nn.Tanh(),
-            layer_init(nn.Linear(256, np.prod(env.action_space.shape)), std=0.01),
+            layer_init(nn.Linear(512, 512)),
+            nn.Tanh(),
+            layer_init(nn.Linear(512, 512)),
+            nn.Tanh(),
+            layer_init(nn.Linear(512, np.prod(env.single_action_space.shape[1])), std=0.01),
         )
-        self.actor_logstd = nn.Parameter(torch.zeros(1, np.prod(env.action_space.shape)))
+        self.actor_logstd = nn.Parameter(torch.zeros(1, np.prod(env.single_action_space.shape[1])))
 
     def get_value(self, x):
         return self.critic(x)
@@ -135,7 +143,7 @@ class Agent(nn.Module):
         probs = Normal(action_mean, action_std)
         if action is None:
             action = probs.sample()
-        return action, probs.log_prob(action).sum(1), probs.entropy().sum(1), self.critic(x)
+        return action, probs.log_prob(action).sum(-1), probs.entropy().sum(-1), self.critic(x)
 
 
 if __name__ == "__main__":
@@ -168,30 +176,36 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    """ envs = gym.vector.SyncVectorEnv(
+    envs = gym.vector.SyncVectorEnv(
         [make_env(args.env_id, i, args.capture_video, run_name, args.gamma) for i in range(args.num_envs)]
     )
-    assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported" """
+    assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
     # Support for multi-agent envs
     #envs.num_envs = envs.envs[0].n_agents * len(envs.envs)
 
-    env = make_env(args.env_id, 0, args.capture_video, run_name, args.gamma)()
+    #env = make_env(args.env_id, 0, args.capture_video, run_name, args.gamma)()
 
-    agent = Agent(env).to(device)
+    agent = Agent(envs).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
 
     # ALGO Logic: Storage setup
-    obs = torch.zeros((args.num_steps, args.num_envs * env.n_agents) + env.observation_space.shape).to(device)
+    """ obs = torch.zeros((args.num_steps, args.num_envs * env.n_agents) + env.observation_space.shape).to(device)
     actions = torch.zeros((args.num_steps, args.num_envs * env.n_agents) + env.action_space.shape).to(device)
     logprobs = torch.zeros((args.num_steps, args.num_envs * env.n_agents)).to(device)
     rewards = torch.zeros((args.num_steps, args.num_envs * env.n_agents)).to(device)
     dones = torch.zeros((args.num_steps, args.num_envs * env.n_agents)).to(device)
-    values = torch.zeros((args.num_steps, args.num_envs * env.n_agents)).to(device)
+    values = torch.zeros((args.num_steps, args.num_envs * env.n_agents)).to(device) """
+    obs = torch.zeros((args.num_steps, args.num_envs) + envs.single_observation_space.shape).to(device)
+    actions = torch.zeros((args.num_steps, args.num_envs) + envs.single_action_space.shape).to(device)
+    logprobs = torch.zeros((args.num_steps, args.num_envs * envs.envs[0].n_agents)).to(device)
+    rewards = torch.zeros((args.num_steps, args.num_envs * envs.envs[0].n_agents)).to(device)
+    dones = torch.zeros((args.num_steps, args.num_envs * envs.envs[0].n_agents)).to(device)
+    values = torch.zeros((args.num_steps, args.num_envs * envs.envs[0].n_agents)).to(device)
 
     # TRY NOT TO MODIFY: start the game
     global_step = 0
     start_time = time.time()
-    next_obs, _ = env.reset(seed=args.seed)
+    next_obs, _ = envs.reset(seed=args.seed)
     next_obs = torch.Tensor(next_obs).to(device)
     next_done = torch.zeros(args.num_envs).to(device)
     num_updates = args.total_timesteps // args.batch_size
@@ -216,7 +230,7 @@ if __name__ == "__main__":
             logprobs[step] = logprob
 
             # TRY NOT TO MODIFY: execute the game and log data.
-            next_obs, reward, terminated, truncated, infos = env.step(action.cpu().numpy())
+            next_obs, reward, terminated, truncated, infos = envs.step(action.cpu().numpy())
             done = np.logical_or(terminated, truncated)
             rewards[step] = torch.tensor(reward).to(device).view(-1)
             next_obs, next_done = torch.Tensor(next_obs).to(device), torch.Tensor(done).to(device)
@@ -250,12 +264,16 @@ if __name__ == "__main__":
             returns = advantages + values
 
         # flatten the batch
-        b_obs = obs.reshape((-1,) + env.observation_space.shape)
+        #b_obs = obs.reshape((-1,) + env.observation_space.shape)
+        b_obs = obs.reshape((-1,) + envs.single_observation_space.shape)
         b_logprobs = logprobs.reshape(-1)
-        b_actions = actions.reshape((-1,) + env.action_space.shape)
+        #b_actions = actions.reshape((-1,) + env.action_space.shape)
+        b_actions = actions.reshape((-1,) + envs.single_action_space.shape)
         b_advantages = advantages.reshape(-1)
         b_returns = returns.reshape(-1)
         b_values = values.reshape(-1)
+
+        print(update)
 
         # Optimizing the policy and value network
         b_inds = np.arange(args.batch_size)

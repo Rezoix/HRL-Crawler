@@ -32,3 +32,7 @@ Kouluttaminen ei kuitenkaan tunnu edistyvän myöskään PPO:lla. Ilmeisesti ong
 että jokaisella unity framella(? vai physics step?) Unity requestaa stepin. Netissä (esim. https://community.arm.com/arm-community-blogs/b/graphics-gaming-and-vr-blog/posts/3-unity-ml-agents-on-arm-how-we-created-game-ai)
 mainitaan että liian pieni decision period voi negatiivisesti vaikuttaa toimintaan. Pitää koittaa saada korjattua toimimaan, niin että
 jokainen steppi ei palauta observaatiota ja ei anneta actionia.
+
+
+#### 4.9 ####
+TODO: ppo_continuous_action jatkaa muuttamista multi-agentiksi. Pitää tehdä oma luokka sync_vector_envistä joka tukee multi-agenttia.

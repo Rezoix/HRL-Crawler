@@ -153,8 +153,8 @@ class BetterUnity3DEnv(MultiAgentEnv):
         # Check action spaces (Only for continuous at the moment)
         if self.group_spec.action_spec.is_continuous():
             self.action_size = self.group_spec.action_spec.continuous_size
-            high = np.array([1] * self.group_spec.action_spec.continuous_size)
-            self.action_space = Box(-high, high, dtype=np.float32)
+            high = 1
+            self.action_space = Box(-high, high, shape=(self.n_agents, self.group_spec.action_spec.continuous_size), dtype=np.float32)
         
         # Check observation spaces
 
@@ -170,10 +170,9 @@ class BetterUnity3DEnv(MultiAgentEnv):
 
         self.obs_dim = self._get_vec_obs_size()
         if self.obs_dim > 0:
-            high = np.array([np.inf] * self.obs_dim)
-            self.observation_space = Box(-high, high, dtype=np.float32)
+            high = np.inf
+            self.observation_space = Box(-high, high, shape=(self.n_agents, self.obs_dim), dtype=np.float32)
 
-        
 
         
 
