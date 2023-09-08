@@ -52,14 +52,15 @@ class BetterUnity3DEnv(MultiAgentEnv):
     _WORKER_ID = 0
 
     def __init__(
-        self,
-        file_name: str = None,
-        port: Optional[int] = None,
-        seed: int = 0,
-        no_graphics: bool = False,
-        timeout_wait: int = 30,
-        episode_horizon: int = 1000,
-        soft_horizon: bool = True,
+            self,
+            file_name: str = None,
+            port: Optional[int] = None,
+            seed: int = 0,
+            no_graphics: bool = False,
+            timeout_wait: int = 30,
+            episode_horizon: int = 1000,
+            soft_horizon: bool = True,
+            timescale: int = 1.0
     ):
         """Initializes a Unity3DEnv object.
         Args:
@@ -91,6 +92,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
 
         import mlagents_envs
         from mlagents_envs.environment import UnityEnvironment
+        from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 
         # Try connecting to the Unity3D game instance. If a port is blocked
         port_ = None
@@ -109,6 +111,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
             seed = worker_id_  # TODO: Seed is hardcoded here, argument for parent function is ignored!
             print(f"Seed: {seed}")
             try:
+                channel = EngineConfigurationChannel()
                 self.unity_env = UnityEnvironment(
                     file_name=file_name,
                     worker_id=worker_id_,
@@ -116,7 +119,9 @@ class BetterUnity3DEnv(MultiAgentEnv):
                     seed=seed,
                     no_graphics=no_graphics,
                     timeout_wait=timeout_wait,
+                    side_channels=[channel]
                 )
+                channel.set_configuration_parameters(time_scale=timescale)
                 print("Created UnityEnvironment for port {}".format(port_ + worker_id_))
             except mlagents_envs.exception.UnityWorkerInUseException:
                 pass
