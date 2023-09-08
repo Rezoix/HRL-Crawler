@@ -14,6 +14,7 @@ from torch.distributions.normal import Normal
 from torch.utils.tensorboard import SummaryWriter
 
 from unity_env import BetterUnity3DEnv
+from vector_env import MultiSyncVectorEnv
 
 
 def parse_args():
@@ -39,7 +40,7 @@ def parse_args():
     # Algorithm specific arguments
     parser.add_argument("--env-id", type=str, default="HalfCheetah-v4",
         help="the id of the environment")
-    parser.add_argument("--total-timesteps", type=int, default=1000000,
+    parser.add_argument("--total-timesteps", type=int, default=10000000,
         help="total timesteps of the experiments")
     parser.add_argument("--learning-rate", type=float, default=3e-4,
         help="the learning rate of the optimizer")
@@ -80,7 +81,7 @@ def parse_args():
 
 def make_env(env_id, idx, capture_video, run_name, gamma):
     def thunk():
-        """ if capture_video:
+        """if capture_video:
             env = gym.make(env_id, render_mode="rgb_array")
         else:
             env = gym.make(env_id)
@@ -93,7 +94,8 @@ def make_env(env_id, idx, capture_video, run_name, gamma):
         env = gym.wrappers.NormalizeObservation(env)
         env = gym.wrappers.TransformObservation(env, lambda obs: np.clip(obs, -10, 10))
         env = gym.wrappers.NormalizeReward(env, gamma=gamma)
-        env = gym.wrappers.TransformReward(env, lambda reward: np.clip(reward, -10, 10)) """
+        env = gym.wrappers.TransformReward(env, lambda reward: np.clip(reward, -10, 10))
+        """
         env = BetterUnity3DEnv()
         return env
 
@@ -143,7 +145,12 @@ class Agent(nn.Module):
         probs = Normal(action_mean, action_std)
         if action is None:
             action = probs.sample()
-        return action, probs.log_prob(action).sum(-1), probs.entropy().sum(-1), self.critic(x)
+        return (
+            action,
+            probs.log_prob(action).sum(-1),
+            probs.entropy().sum(-1),
+            self.critic(x),
+        )
 
 
 if __name__ == "__main__":
@@ -176,14 +183,14 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    envs = gym.vector.SyncVectorEnv(
+    envs = MultiSyncVectorEnv(
         [make_env(args.env_id, i, args.capture_video, run_name, args.gamma) for i in range(args.num_envs)]
     )
     assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
     # Support for multi-agent envs
-    #envs.num_envs = envs.envs[0].n_agents * len(envs.envs)
+    # envs.num_envs = envs.envs[0].n_agents * len(envs.envs)
 
-    #env = make_env(args.env_id, 0, args.capture_video, run_name, args.gamma)()
+    # env = make_env(args.env_id, 0, args.capture_video, run_name, args.gamma)()
 
     agent = Agent(envs).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
@@ -260,18 +267,20 @@ if __name__ == "__main__":
                     nextnonterminal = 1.0 - dones[t + 1]
                     nextvalues = values[t + 1]
                 delta = rewards[t] + args.gamma * nextvalues * nextnonterminal - values[t]
-                advantages[t] = lastgaelam = delta + args.gamma * args.gae_lambda * nextnonterminal * lastgaelam
+                advantages[t] = lastgaelam = (
+                    delta + args.gamma * args.gae_lambda * nextnonterminal * lastgaelam
+                )
             returns = advantages + values
 
         # flatten the batch
-        #b_obs = obs.reshape((-1,) + env.observation_space.shape)
+        # b_obs = obs.reshape((-1,) + env.observation_space.shape)
         b_obs = obs.reshape((-1,) + envs.single_observation_space.shape)
-        b_logprobs = logprobs.reshape(-1)
-        #b_actions = actions.reshape((-1,) + env.action_space.shape)
+        b_logprobs = logprobs  # .reshape(-1)
+        # b_actions = actions.reshape((-1,) + env.action_space.shape)
         b_actions = actions.reshape((-1,) + envs.single_action_space.shape)
-        b_advantages = advantages.reshape(-1)
-        b_returns = returns.reshape(-1)
-        b_values = values.reshape(-1)
+        b_advantages = advantages  # .reshape(-1)
+        b_returns = returns  # .reshape(-1)
+        b_values = values  # .reshape(-1)
 
         print(update)
 
@@ -284,7 +293,9 @@ if __name__ == "__main__":
                 end = start + args.minibatch_size
                 mb_inds = b_inds[start:end]
 
-                _, newlogprob, entropy, newvalue = agent.get_action_and_value(b_obs[mb_inds], b_actions[mb_inds])
+                _, newlogprob, entropy, newvalue = agent.get_action_and_value(
+                    b_obs[mb_inds], b_actions[mb_inds]
+                )
                 logratio = newlogprob - b_logprobs[mb_inds]
                 ratio = logratio.exp()
 
@@ -304,7 +315,7 @@ if __name__ == "__main__":
                 pg_loss = torch.max(pg_loss1, pg_loss2).mean()
 
                 # Value loss
-                newvalue = newvalue.view(-1)
+                newvalue = newvalue.squeeze()  # .view(-1)
                 if args.clip_vloss:
                     v_loss_unclipped = (newvalue - b_returns[mb_inds]) ** 2
                     v_clipped = b_values[mb_inds] + torch.clamp(
@@ -334,7 +345,6 @@ if __name__ == "__main__":
         var_y = np.var(y_true)
         explained_var = np.nan if var_y == 0 else 1 - np.var(y_true - y_pred) / var_y
 
-
         print(f"step:       {global_step}")
         print(f"lr:         {optimizer.param_groups[0]['lr']}")
         print(f"vl:         {v_loss.item()}")
@@ -353,8 +363,8 @@ if __name__ == "__main__":
         writer.add_scalar("losses/approx_kl", approx_kl.item(), global_step)
         writer.add_scalar("losses/clipfrac", np.mean(clipfracs), global_step)
         writer.add_scalar("losses/explained_variance", explained_var, global_step)
-        #print("SPS:", int(global_step / (time.time() - start_time)))
+        # print("SPS:", int(global_step / (time.time() - start_time)))
         writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
 
-    env.close()
+    envs.close()
     writer.close()
