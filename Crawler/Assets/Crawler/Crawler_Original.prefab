@@ -2784,7 +2784,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 0}
-  agentDoneOnGroundContact: 1
+  agentDoneOnGroundContact: 0
   penalizeGroundContact: 1
   groundContactPenalty: -1
   touchingGround: 0
@@ -3174,7 +3174,7 @@ MonoBehaviour:
   leg2Lower: {fileID: 4845971000281612789}
   leg3Upper: {fileID: 4845971000943818107}
   leg3Lower: {fileID: 4845971000245862063}
-  useFootGroundedVisualization: 0
+  useFootGroundedVisualization: 1
   foot0: {fileID: 4845971001702882992}
   foot1: {fileID: 4845970999844939483}
   foot2: {fileID: 4845971001308907666}
@@ -3209,7 +3209,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DecisionPeriod: 5
+  DecisionPeriod: 1
   DecisionStep: 0
   TakeActionsBetweenDecisions: 0
 --- !u!114 &4845971001715176660

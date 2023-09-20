@@ -69,7 +69,9 @@ public class CrawlerAgent : Agent
 
     public override void Initialize()
     {
-        SpawnTarget(TargetPrefab, transform.position); //spawn target
+        //SpawnTarget(TargetPrefab, transform.position); //spawn target
+        //Use Static target, included with the environment rather than spawning a new one
+        m_Target = TargetPrefab;
 
         m_OrientationCube = GetComponentInChildren<OrientationCubeController>();
         m_DirectionIndicator = GetComponentInChildren<DirectionIndicator>();
@@ -113,7 +115,7 @@ public class CrawlerAgent : Agent
         UpdateOrientationObjects();
 
         //Set our goal walking speed
-        TargetWalkingSpeed = Random.Range(0.1f, m_maxWalkingSpeed);
+        TargetWalkingSpeed = m_maxWalkingSpeed;//Random.Range(0.1f, m_maxWalkingSpeed);
     }
 
     /// <summary>
