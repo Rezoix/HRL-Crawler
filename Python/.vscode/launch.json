@@ -5,16 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
             "name": "Python: Profiler",
             "type": "python",
             "request": "launch",
             "module": "cProfile",
-            "args":[
-                "-o", "${workspaceFolder}/tmp.prof", "${workspaceFolder}/sac_continuous_action.py"
+            "args": [
+                "-o",
+                "${workspaceFolder}/tmp.prof",
+                "${workspaceFolder}/sac_continuous_action.py"
             ]
         },
         {
-            "name": "Python: Current File",
+            "name": "Python: PPO",
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/ppo_continuous_action.py",

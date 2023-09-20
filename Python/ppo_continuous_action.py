@@ -38,29 +38,29 @@ def parse_args():
         help="whether to capture videos of the agent performances (check out `videos` folder)")
 
     # Algorithm specific arguments
-    parser.add_argument("--env-id", type=str, default="HalfCheetah-v4",
-        help="the id of the environment")
+    parser.add_argument("--filepath", type=str, default="C:\\Users\\Saku\\Documents\\Dippa\\Crawler\\build\\UnityEnvironment.exe",
+        help="filepath to Unity environment executable")
     parser.add_argument("--total-timesteps", type=int, default=10000000,
         help="total timesteps of the experiments")
-    parser.add_argument("--learning-rate", type=float, default=3e-4,
+    parser.add_argument("--learning-rate", type=float, default=0.01, #0.0003
         help="the learning rate of the optimizer")
-    parser.add_argument("--num-envs", type=int, default=1,
+    parser.add_argument("--num-envs", type=int, default=4,
         help="the number of parallel game environments")
     parser.add_argument("--num-steps", type=int, default=20480,
         help="the number of steps to run in each environment per policy rollout")
-    parser.add_argument("--anneal-lr", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
+    parser.add_argument("--anneal-lr", type=lambda x: bool(strtobool(x)), default=False, nargs="?", const=True,
         help="Toggle learning rate annealing for policy and value networks")
     parser.add_argument("--gamma", type=float, default=0.99,
         help="the discount factor gamma")
     parser.add_argument("--gae-lambda", type=float, default=0.95,
         help="the lambda for the general advantage estimation")
-    parser.add_argument("--num-minibatches", type=int, default=32,
+    parser.add_argument("--num-minibatches", type=int, default=10,
         help="the number of mini-batches")
     parser.add_argument("--update-epochs", type=int, default=3,
         help="the K epochs to update the policy")
     parser.add_argument("--norm-adv", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
         help="Toggles advantages normalization")
-    parser.add_argument("--clip-coef", type=float, default=0.2,
+    parser.add_argument("--clip-coef", type=float, default=0.2, #Epsilon
         help="the surrogate clipping coefficient")
     parser.add_argument("--clip-vloss", type=lambda x: bool(strtobool(x)), default=True, nargs="?", const=True,
         help="Toggles whether or not to use a clipped loss for the value function, as per the paper.")
@@ -73,13 +73,13 @@ def parse_args():
     parser.add_argument("--target-kl", type=float, default=None,
         help="the target KL divergence threshold")
     args = parser.parse_args()
-    args.batch_size = int(args.num_envs * args.num_steps)
+    args.batch_size = args.num_steps#int(args.num_envs * args.num_steps)
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     # fmt: on
     return args
 
 
-def make_env(env_id, idx, capture_video, run_name, gamma):
+def make_env(idx, file_name=None, time_scale=1):  # env_id, idx, capture_video, run_name, gamma):
     def thunk():
         """if capture_video:
             env = gym.make(env_id, render_mode="rgb_array")
@@ -96,7 +96,7 @@ def make_env(env_id, idx, capture_video, run_name, gamma):
         env = gym.wrappers.NormalizeReward(env, gamma=gamma)
         env = gym.wrappers.TransformReward(env, lambda reward: np.clip(reward, -10, 10))
         """
-        env = BetterUnity3DEnv()
+        env = BetterUnity3DEnv(file_name=file_name, time_scale=time_scale)
         return env
 
     return thunk
@@ -138,6 +138,7 @@ class Agent(nn.Module):
     def get_value(self, x):
         return self.critic(x)
 
+    # (2,10,158)
     def get_action_and_value(self, x, action=None):
         action_mean = self.actor_mean(x)
         action_logstd = self.actor_logstd.expand_as(action_mean)
@@ -155,7 +156,7 @@ class Agent(nn.Module):
 
 if __name__ == "__main__":
     args = parse_args()
-    run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
+    run_name = f"{args.exp_name}__{args.seed}__{int(time.time())}"
     if args.track:
         import wandb
 
@@ -183,9 +184,9 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    envs = MultiSyncVectorEnv(
-        [make_env(args.env_id, i, args.capture_video, run_name, args.gamma) for i in range(args.num_envs)]
-    )
+    if args.filepath == None:  # Check that only one env is created if using unity editor
+        args.num_envs = 1
+    envs = MultiSyncVectorEnv([make_env(i, file_name=args.filepath) for i in range(args.num_envs)])
     assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
     # Support for multi-agent envs
     # envs.num_envs = envs.envs[0].n_agents * len(envs.envs)
@@ -204,17 +205,17 @@ if __name__ == "__main__":
     values = torch.zeros((args.num_steps, args.num_envs * env.n_agents)).to(device) """
     obs = torch.zeros((args.num_steps, args.num_envs) + envs.single_observation_space.shape).to(device)
     actions = torch.zeros((args.num_steps, args.num_envs) + envs.single_action_space.shape).to(device)
-    logprobs = torch.zeros((args.num_steps, args.num_envs * envs.envs[0].n_agents)).to(device)
-    rewards = torch.zeros((args.num_steps, args.num_envs * envs.envs[0].n_agents)).to(device)
-    dones = torch.zeros((args.num_steps, args.num_envs * envs.envs[0].n_agents)).to(device)
-    values = torch.zeros((args.num_steps, args.num_envs * envs.envs[0].n_agents)).to(device)
+    logprobs = torch.zeros((args.num_steps, args.num_envs, envs.envs[0].n_agents)).to(device)
+    rewards = torch.zeros((args.num_steps, args.num_envs, envs.envs[0].n_agents)).to(device)
+    dones = torch.zeros((args.num_steps, args.num_envs, envs.envs[0].n_agents)).to(device)
+    values = torch.zeros((args.num_steps, args.num_envs, envs.envs[0].n_agents)).to(device)
 
     # TRY NOT TO MODIFY: start the game
     global_step = 0
     start_time = time.time()
     next_obs, _ = envs.reset(seed=args.seed)
     next_obs = torch.Tensor(next_obs).to(device)
-    next_done = torch.zeros(args.num_envs).to(device)
+    next_done = torch.zeros((args.num_envs, envs.envs[0].n_agents)).to(device)
     num_updates = args.total_timesteps // args.batch_size
 
     for update in range(1, num_updates + 1):
@@ -232,14 +233,14 @@ if __name__ == "__main__":
             # ALGO LOGIC: action logic
             with torch.no_grad():
                 action, logprob, _, value = agent.get_action_and_value(next_obs)
-                values[step] = value.flatten()
+                values[step] = value.squeeze()
             actions[step] = action
             logprobs[step] = logprob
 
             # TRY NOT TO MODIFY: execute the game and log data.
             next_obs, reward, terminated, truncated, infos = envs.step(action.cpu().numpy())
             done = np.logical_or(terminated, truncated)
-            rewards[step] = torch.tensor(reward).to(device).view(-1)
+            rewards[step] = torch.tensor(reward).to(device)  # .view(-1)
             next_obs, next_done = torch.Tensor(next_obs).to(device), torch.Tensor(done).to(device)
 
             # Only print when at least 1 env is done
@@ -256,7 +257,7 @@ if __name__ == "__main__":
 
         # bootstrap value if not done
         with torch.no_grad():
-            next_value = agent.get_value(next_obs).reshape(1, -1)
+            next_value = agent.get_value(next_obs).squeeze()  # .reshape(1, -1)
             advantages = torch.zeros_like(rewards).to(device)
             lastgaelam = 0
             for t in reversed(range(args.num_steps)):
@@ -274,15 +275,13 @@ if __name__ == "__main__":
 
         # flatten the batch
         # b_obs = obs.reshape((-1,) + env.observation_space.shape)
-        b_obs = obs.reshape((-1,) + envs.single_observation_space.shape)
-        b_logprobs = logprobs  # .reshape(-1)
+        b_obs = obs  # .reshape((-1,) + envs.single_observation_space.shape) #(batches, (environments,) agents, observations)
+        b_logprobs = logprobs  # .reshape(-1) #(batches, environments, agents)
         # b_actions = actions.reshape((-1,) + env.action_space.shape)
-        b_actions = actions.reshape((-1,) + envs.single_action_space.shape)
-        b_advantages = advantages  # .reshape(-1)
-        b_returns = returns  # .reshape(-1)
-        b_values = values  # .reshape(-1)
-
-        print(update)
+        b_actions = actions  # .reshape((-1,) + envs.single_action_space.shape) #(batches, (environments,) agents, actions)
+        b_advantages = advantages  # .reshape(-1) #(batches, environments, agents)
+        b_returns = returns  # .reshape(-1) #(batches, environments, agents)
+        b_values = values  # .reshape(-1) #(batches, environments, agents)
 
         # Optimizing the policy and value network
         b_inds = np.arange(args.batch_size)
@@ -345,13 +344,22 @@ if __name__ == "__main__":
         var_y = np.var(y_true)
         explained_var = np.nan if var_y == 0 else 1 - np.var(y_true - y_pred) / var_y
 
-        print(f"step:       {global_step}")
-        print(f"lr:         {optimizer.param_groups[0]['lr']}")
-        print(f"vl:         {v_loss.item()}")
-        print(f"pl:         {pg_loss.item()}")
-        print(f"el:         {entropy_loss.item()}")
-        print(f"exp_v:      {explained_var}")
-        print(f"SPS:        {int(global_step / (time.time() - start_time))}")
+        ep_reward = torch.sum(rewards, dim=0)
+
+        reward_mean = torch.mean(ep_reward).item()
+        reward_min = torch.min(ep_reward).item()
+        reward_max = torch.max(ep_reward).item()
+
+        print(f"update:         {update}/{num_updates}")
+        print(f"step:           {global_step}/{args.total_timesteps}")
+        print(f"mean_reward:    {reward_mean}")
+        print(f"min_reward:     {reward_min}")
+        print(f"max_reward:     {reward_max}")
+        print(f"vl:             {v_loss.item()}")
+        print(f"pl:             {pg_loss.item()}")
+        print(f"el:             {entropy_loss.item()}")
+        print(f"exp_v:          {explained_var}")
+        print(f"SPS:            {int(global_step / (time.time() - start_time))}")
         print("\n\n\n")
 
         # TRY NOT TO MODIFY: record rewards for plotting purposes
