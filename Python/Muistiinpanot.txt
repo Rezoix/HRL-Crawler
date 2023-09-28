@@ -36,3 +36,11 @@ jokainen steppi ei palauta observaatiota ja ei anneta actionia.
 
 #### 4.9 ####
 TODO: ppo_continuous_action jatkaa muuttamista multi-agentiksi. Pitää tehdä oma luokka sync_vector_envistä joka tukee multi-agenttia.
+
+
+
+
+#### 27.9 ####
+Unity ML-Agents GridSensorComponentissa bugi, joka ilmenee kun grid ei ole neliön mallinen (esim. 4x4). Jos grid on suorakaiteen mallinen (esim. 6x4)
+tulee IndexOutOfRangeException. Rivi 327 tiedostossa com.unity.ml-agents/Runtime/Sensors/GridSensorBase.cs, indeksointi on väärin; vaihtaa w ja h paikat
+päittäin, niin silloin toimii.

@@ -105,9 +105,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
             if port_ is not None:
                 # time.sleep(random.randint(1, 10))
                 time.sleep(random.random() * 0.5)
-            port_ = port or (
-                self._BASE_PORT_ENVIRONMENT if file_name else self._BASE_PORT_EDITOR
-            )
+            port_ = port or (self._BASE_PORT_ENVIRONMENT if file_name else self._BASE_PORT_EDITOR)
             # cache the worker_id and
             # increase it for the next environment
             worker_id_ = BetterUnity3DEnv._WORKER_ID if file_name else 0
@@ -179,12 +177,12 @@ class BetterUnity3DEnv(MultiAgentEnv):
         else:
             self.observation_space = list_spaces[0] """
 
-        self.obs_dim = self._get_vec_obs_size()
+        """ self.obs_dim = self._get_vec_obs_size()
         if self.obs_dim > 0:
             high = np.inf
-            self.observation_space = Box(
-                -high, high, shape=(self.n_agents, self.obs_dim), dtype=np.float32
-            )
+            self.observation_space = Box(-high, high, shape=(self.n_agents, self.obs_dim), dtype=np.float32) """
+
+        self.observation_space = self._get_obs_shape()
 
     def _get_vec_obs_size(self):
         res = 0
@@ -193,11 +191,26 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 res += obs_spec.shape[0]
         return res
 
+    def _get_obs_shape(self):
+        spaces = []
+        for obs_spec in self.group_spec.observation_specs:
+            # Vector observation
+            if len(obs_spec.shape) == 1:
+                spaces.append(Box(-1, 1, shape=obs_spec.shape, dtype=np.float32))
+            # Grid observation
+            if "GridSensor" in obs_spec.name:
+                if "OneHot" in obs_spec.name:
+                    spaces.append(Box(0, 1, shape=obs_spec.shape, dtype=int))
+                if "Discrete" in obs_spec.name:
+                    spaces.append(Box(0, obs_spec.shape[-1], shape=obs_spec.shape[0:2], dtype=int))
+        ret = TupleSpace(spaces)
+        shape = tuple([x.shape for x in spaces])
+        ret._shape = shape
+        return ret
+
     def step(
         self, action_dict: MultiAgentDict
-    ) -> Tuple[
-        MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict
-    ]:
+    ) -> Tuple[MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict]:
         """Performs one multi-agent step through the game.
         Args:
             action_dict: Multi-agent action dict with:
@@ -221,9 +234,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
         for behavior_name in self.unity_env.behavior_specs:
             # New ML-Agents API: Set all agents actions at the same time
             # via an ActionTuple. Since API v1.4.0.
-            if self.api_version[0] > 1 or (
-                self.api_version[0] == 1 and self.api_version[1] >= 4
-            ):
+            if self.api_version[0] > 1 or (self.api_version[0] == 1 and self.api_version[1] >= 4):
                 actions = action_dict
                 """ for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
                     key = behavior_name + "_{}".format(agent_id)
@@ -243,14 +254,10 @@ class BetterUnity3DEnv(MultiAgentEnv):
             # Old behavior: Do not use an ActionTuple and set each agent's
             # action individually.
             else:
-                for agent_id in self.unity_env.get_steps(behavior_name)[
-                    0
-                ].agent_id_to_index.keys():
+                for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id_to_index.keys():
                     key = behavior_name + "_{}".format(agent_id)
                     all_agents.append(key)
-                    self.unity_env.set_action_for_agent(
-                        behavior_name, agent_id, action_dict[key]
-                    )
+                    self.unity_env.set_action_for_agent(behavior_name, agent_id, action_dict[key])
         # Do the step.
         self.unity_env.step()
 
@@ -272,9 +279,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
 
         return obs, rewards, terminateds, truncateds, infos
 
-    def reset(
-        self, *, seed=None, options=None
-    ) -> Tuple[MultiAgentDict, MultiAgentDict]:
+    def reset(self, *, seed=None, options=None) -> Tuple[MultiAgentDict, MultiAgentDict]:
         """Resets the entire Unity3D scene (a single multi-agent episode)."""
         self.episode_timesteps = 0
         if not self.soft_horizon:
@@ -336,14 +341,10 @@ class BetterUnity3DEnv(MultiAgentEnv):
 
                 os = tuple(o[idx] for o in decision_steps.obs)
                 os = (
-                    os[0]
-                    if len(os) == 1
-                    else np.array(np.concatenate(os), dtype=np.float32)
+                    os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32)
                 )  # Concatenate observations into single array
                 obs[agent_id] = os
-                rewards[agent_id] = (
-                    decision_steps.reward[idx] + decision_steps.group_reward[idx]
-                )
+                rewards[agent_id] = decision_steps.reward[idx] + decision_steps.group_reward[idx]
                 # print(f"{key}, {rewards[key]}, {decision_steps.group_reward[idx]}")
                 # print(i)
                 i += 1
@@ -360,13 +361,9 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 if agent_id not in obs:
                     os = tuple(o[idx] for o in terminal_steps.obs)
                     obs[agent_id] = os = (
-                        os[0]
-                        if len(os) == 1
-                        else np.array(np.concatenate(os), dtype=np.float32)
+                        os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32)
                     )  # Concatenate observations into single array
-                rewards[agent_id] = (
-                    terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
-                )
+                rewards[agent_id] = terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
 
         # Only use dones if all agents are done, then we should do a reset.
         # if False not in terminateds.values():
