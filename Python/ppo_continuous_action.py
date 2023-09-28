@@ -38,7 +38,7 @@ def parse_args():
         help="whether to capture videos of the agent performances (check out `videos` folder)")
 
     # Algorithm specific arguments
-    parser.add_argument("--filepath", type=str, default="C:\\Users\\Saku\\Documents\\Dippa\\Crawler\\build\\UnityEnvironment.exe",
+    parser.add_argument("--filepath", type=str, default=None,#"C:\\Users\\Saku\\Documents\\Dippa\\Crawler\\build\\UnityEnvironment.exe",
         help="filepath to Unity environment executable")
     parser.add_argument("--total-timesteps", type=int, default=10000000,
         help="total timesteps of the experiments")
@@ -96,7 +96,7 @@ def make_env(idx, file_name=None, time_scale=1):  # env_id, idx, capture_video, 
         env = gym.wrappers.NormalizeReward(env, gamma=gamma)
         env = gym.wrappers.TransformReward(env, lambda reward: np.clip(reward, -10, 10))
         """
-        env = BetterUnity3DEnv(file_name=file_name, time_scale=time_scale)
+        env = BetterUnity3DEnv(file_name=file_name, timescale=time_scale)
         return env
 
     return thunk
