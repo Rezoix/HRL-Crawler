@@ -406,6 +406,34 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1237759622}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1254,10 +1282,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 180391961}
     m_Modifications:
-    - target: {fileID: 4845971001715176648, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
-      propertyPath: m_Model
-      value: 
-      objectReference: {fileID: 5022602860645237092, guid: 74718740bc57aa64e8bd4855d2df4d0a, type: 3}
     - target: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: TargetPrefab
       value: 
@@ -1789,6 +1813,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7663242372573176709, guid: 1521bc4c3ca38144680cad40c93845c4, type: 3}
   m_PrefabInstance: {fileID: 1215115077}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1237759622 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+  m_PrefabInstance: {fileID: 689197963}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f81f27f9653f6840abfa93e64c3bc2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1238287684
 GameObject:
   m_ObjectHideFlags: 0
@@ -2063,6 +2098,22 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7663242372573176709, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
   m_PrefabInstance: {fileID: 621110651}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1519380603 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4845971001715176661, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+  m_PrefabInstance: {fileID: 41281434}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1519380608 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+  m_PrefabInstance: {fileID: 41281434}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1519380603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f81f27f9653f6840abfa93e64c3bc2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1591082215
 GameObject:
   m_ObjectHideFlags: 0
@@ -2387,6 +2438,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1591082216}
     m_Modifications:
+    - target: {fileID: 817153586390907960, guid: 1521bc4c3ca38144680cad40c93845c4, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3211995387142974473, guid: 1521bc4c3ca38144680cad40c93845c4, type: 3}
       propertyPath: m_Name
       value: Start_walls
@@ -2806,6 +2861,46 @@ PrefabInstance:
     - target: {fileID: 6204644061983071533, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1519380603}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1519380608}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 7558009837755967657, guid: 5a6355ed8c11bea4cb06d894dec314c9, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

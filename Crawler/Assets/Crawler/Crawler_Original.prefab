@@ -3091,6 +3091,7 @@ GameObject:
   - component: {fileID: 4845971001715176663}
   - component: {fileID: 4845971001715176660}
   - component: {fileID: 8968436865147081600}
+  - component: {fileID: 8189284739982663338}
   m_Layer: 0
   m_Name: Crawler_Original
   m_TagString: Untagged
@@ -3249,6 +3250,46 @@ MonoBehaviour:
     UseJointPositionsAndAngles: 0
     UseJointForces: 0
   sensorName: 
+--- !u!114 &8189284739982663338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4845971001715176661}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a501962d056745d1a30e99146ee39fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SensorName: GridSensor
+  m_CellScale: {x: 1, y: 1.5, z: 1}
+  m_GridSize: {x: 4, y: 1, z: 8}
+  m_RotateWithAgent: 1
+  m_AgentGameObject: {fileID: 0}
+  m_DetectableTags:
+  - wall
+  - target
+  - obj_gap
+  - obj_stairs
+  - obj_wall
+  - obj_crawl
+  m_ColliderMask:
+    serializedVersion: 2
+    m_Bits: 0
+  m_MaxColliderBufferSize: 500
+  m_InitialColliderBufferSize: 4
+  m_DebugColors:
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0, g: 0, b: 0, a: 0}
+  m_GizmoYOffset: 0
+  m_ShowGizmos: 1
+  m_CompressionType: 0
+  m_ObservationStacks: 1
 --- !u!1 &4845971001730692034
 GameObject:
   m_ObjectHideFlags: 0

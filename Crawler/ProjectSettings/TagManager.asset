@@ -8,6 +8,11 @@ TagManager:
   - ground
   - target
   - wall
+  - Reset
+  - obj_crawl
+  - obj_gap
+  - obj_stairs
+  - obj_wall
   layers:
   - Default
   - TransparentFX
