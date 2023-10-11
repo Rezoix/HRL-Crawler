@@ -13,7 +13,7 @@ import torch.optim as optim
 from torch.distributions.normal import Normal
 from torch.utils.tensorboard import SummaryWriter
 
-from unity_env import BetterUnity3DEnv
+from unity_env_vector import BetterUnity3DEnv
 from vector_env import MultiSyncVectorEnv
 
 

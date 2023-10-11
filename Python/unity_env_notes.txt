@@ -14,8 +14,8 @@ NEW MODIFICATIONS:
 - Gather information from the environment
 	- Get the number of agents
 	- Get action and observation spaces automatically (no need to manually specify)
+
+VECTOR Version (for cleanrl):
+- Use Gymnasium "standard" format rather than rllib dictionary format
 - Concatenate observations for single agent
-	- CleanRL implementation doesnt seem to like observations in form of Tuple(Box, Box)
-		- Could be fixed at some point? Doesnt really matter though?
-- Returning a dictionary for multi-agent observations doesnt seem to work with SyncVectorEnv
-	- For now, return only the first agent's observations
+

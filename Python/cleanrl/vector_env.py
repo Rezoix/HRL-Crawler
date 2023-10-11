@@ -4,7 +4,7 @@ from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple, Uni
 import numpy as np
 from numpy.typing import NDArray
 
-from unity_env import BetterUnity3DEnv as Env
+from unity_env_vector import BetterUnity3DEnv as Env
 from gymnasium.spaces import Space
 from gymnasium.vector.utils import concatenate, create_empty_array, iterate
 from gymnasium.vector.sync_vector_env import SyncVectorEnv

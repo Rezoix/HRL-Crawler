@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Current File",
             "type": "python",
             "request": "launch",
             "program": "${file}",
@@ -13,21 +13,18 @@
             "justMyCode": false
         },
         {
-            "name": "Python: Profiler",
+            "name": "RLlib PPO",
             "type": "python",
             "request": "launch",
-            "module": "cProfile",
-            "args": [
-                "-o",
-                "${workspaceFolder}/tmp.prof",
-                "${workspaceFolder}/sac_continuous_action.py"
-            ]
+            "program": "${workspaceFolder}/ray_train.py",
+            "console": "integratedTerminal",
+            "justMyCode": false
         },
         {
-            "name": "Python: PPO",
+            "name": "CleanRL PPO",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/ppo_continuous_action.py",
+            "program": "${workspaceFolder}/cleanrl/ppo_continuous_action.py",
             "console": "integratedTerminal",
             "justMyCode": false
         }

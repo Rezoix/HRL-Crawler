@@ -1,19 +1,36 @@
-from gymnasium.spaces import Box, MultiDiscrete, Tuple as TupleSpace
+from gymnasium.spaces import Box, MultiDiscrete, Space, Tuple as TupleSpace
+import gymnasium as gym
 import logging
 import numpy as np
 import random
 import time
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Dict, Any, List
 
-from ray.rllib.env.multi_agent_env import MultiAgentEnv
-from ray.rllib.policy.policy import PolicySpec
-from ray.rllib.utils.annotations import PublicAPI
-from ray.rllib.utils.typing import MultiAgentDict, PolicyID, AgentID
+# from ray.rllib.env.multi_agent_env import MultiAgentEnv
+# from ray.rllib.policy.policy import PolicySpec
+# from ray.rllib.utils.annotations import PublicAPI
+# from ray.rllib.utils.typing import MultiAgentDict, PolicyID, AgentID
 
 logger = logging.getLogger(__name__)
 
+# RLlib typings
+AgentID = str
+MultiAgentDict = Dict[str, Any]
 
-@PublicAPI
+
+class MultiAgentEnv(gym.Env):
+    def __init__(self):
+        super().__init__()
+
+        if not hasattr(self, "observation_space"):
+            self.observation_space = None
+        if not hasattr(self, "action_space"):
+            self.action_space = None
+        if not hasattr(self, "_agent_ids"):
+            self._agent_ids = set()
+
+
+# @PublicAPI
 class BetterUnity3DEnv(MultiAgentEnv):
     """A MultiAgentEnv representing a single Unity3D game instance.
     For an example on how to use this Env with a running Unity3D editor
@@ -102,7 +119,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
                     worker_id=worker_id_,
                     base_port=port_,
                     seed=seed,
-                    no_graphics=True if file_name is None else False,
+                    no_graphics=no_graphics,
                     timeout_wait=timeout_wait,
                     side_channels=[channel],
                 )
@@ -176,8 +193,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 res += np.prod(obs_spec.shape)
         return res
 
-    # Not currently used
-    """ def _get_obs_shape(self):
+    def _get_obs_shape(self):
         spaces = []
         for obs_spec in self.group_spec.observation_specs:
             # Vector observation
@@ -192,7 +208,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
         ret = TupleSpace(spaces)
         shape = tuple([x.shape for x in spaces])
         ret._shape = shape
-        return ret """
+        return ret
 
     def step(
         self, action_dict: MultiAgentDict
@@ -221,8 +237,8 @@ class BetterUnity3DEnv(MultiAgentEnv):
             # New ML-Agents API: Set all agents actions at the same time
             # via an ActionTuple. Since API v1.4.0.
             if self.api_version[0] > 1 or (self.api_version[0] == 1 and self.api_version[1] >= 4):
-                actions = []
-                for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
+                actions = action_dict
+                """ for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
                     key = behavior_name + "_{}".format(agent_id)
                     all_agents.append(key)
                     # print(key)
@@ -230,8 +246,8 @@ class BetterUnity3DEnv(MultiAgentEnv):
                     if key not in action_dict:
                         print("nokey")
                     else:
-                        actions.append(action_dict[key])
-                if actions:
+                        actions.append(action_dict[key]) """
+                if actions.size > 0:
                     if actions[0].dtype == np.float32:
                         action_tuple = ActionTuple(continuous=np.array(actions))
                     else:
@@ -250,14 +266,16 @@ class BetterUnity3DEnv(MultiAgentEnv):
         obs, rewards, terminateds, truncateds, infos = self._get_step_results()
 
         # Global horizon reached? -> Return __all__ truncated=True, so user
-        # can reset. Set all agents' individual `truncated` to True as well.
+        # can reset. Set all agents' individual `trunepisode_horizoncated` to True as well.
         self.episode_timesteps += 1
         if self.episode_timesteps >= self.episode_horizon:
             return (
                 obs,
                 rewards,
                 terminateds,
-                dict({"__all__": True}, **{agent_id: True for agent_id in all_agents}),
+                [
+                    1 for _ in range(self.n_agents)
+                ],  # dict({"__all__": 1}, **{agent_id: 1 for agent_id in all_agents}),
                 infos,
             )
 
@@ -269,8 +287,27 @@ class BetterUnity3DEnv(MultiAgentEnv):
         if not self.soft_horizon:
             self.unity_env.reset()
         obs, _, _, _, infos = self._get_step_results()
-        # print(obs)
         return obs, infos
+
+    def action_space_sample(self, agent_ids=None):
+        if agent_ids == None:
+            agent_ids = self.get_agent_ids()
+        samples = np.empty((self.n_agents, self.action_size), dtype=np.float32)
+        for agent_id in agent_ids:
+            samples[agent_id] = self.action_space.sample()
+        if len(samples) == 0:
+            print("no agents -> no samples???")
+        return samples
+
+    def get_agent_ids(self):
+        all_agents = []
+        for behavior_name in self.unity_env.behavior_specs:
+            for step in self.unity_env.get_steps(behavior_name):
+                for agent_id in step.agent_id:
+                    all_agents.append(agent_id)
+        if len(all_agents) == 0:
+            print("no agents???")
+        return all_agents
 
     def _get_step_results(self):
         """Collects those agents' obs/rewards that have to act in next `step`.
@@ -284,9 +321,10 @@ class BetterUnity3DEnv(MultiAgentEnv):
                     __all__=True, if episode is done for all agents.
                 infos: An (empty) info dict.
         """
-        obs = {}
-        rewards = {}
-        terminateds = {"__all__": False}
+        obs = np.empty((self.n_agents, self.obs_dim), dtype=np.float32)
+        rewards = np.empty(self.n_agents, dtype=np.float32)
+        terminateds = np.empty(self.n_agents, dtype=int)  # {"__all__": False}
+        truncateds = np.empty(self.n_agents, dtype=int)
         infos = {}
         i = 0
         for behavior_name in self.unity_env.behavior_specs:
@@ -297,50 +335,42 @@ class BetterUnity3DEnv(MultiAgentEnv):
             # information we have.
             # print(decision_steps.agent_id_to_index.items())
             for agent_id, idx in decision_steps.agent_id_to_index.items():
-                key = behavior_name + "_{}".format(agent_id)
-                terminateds[key] = False
-                os = tuple(o[idx] for o in decision_steps.obs)
-                os = os[0] if len(os) == 1 else os
-                obs[key] = os
-                rewards[key] = decision_steps.reward[idx] + decision_steps.group_reward[idx]
+                # key = behavior_name + "_{}".format(agent_id)
+                terminateds[agent_id] = 0
+
+                # TMP
+                truncateds[agent_id] = 0
+
+                # FLATTEN ALL OBSERVATIONS
+                os = tuple(o[idx].flatten() for o in decision_steps.obs)
+                os = (
+                    os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32)
+                )  # Concatenate observations into single array
+                obs[agent_id] = os
+                rewards[agent_id] = decision_steps.reward[idx] + decision_steps.group_reward[idx]
                 # print(f"{key}, {rewards[key]}, {decision_steps.group_reward[idx]}")
                 # print(i)
                 i += 1
             for agent_id, idx in terminal_steps.agent_id_to_index.items():
-                key = behavior_name + "_{}".format(agent_id)
-                terminateds[key] = True
+                # key = behavior_name + "_{}".format(agent_id)
+                terminateds[agent_id] = 1
+
+                # TMP
+                truncateds[agent_id] = 0
+
                 # Only overwrite rewards (last reward in episode), b/c obs
                 # here is the last obs (which doesn't matter anyways).
                 # Unless key does not exist in obs.
-                if key not in obs:
+                if agent_id not in obs:
                     os = tuple(o[idx] for o in terminal_steps.obs)
-                    obs[key] = os = os[0] if len(os) == 1 else os
-                rewards[key] = terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
+                    obs[agent_id] = os = (
+                        os[0] if len(os) == 1 else np.array(np.concatenate(os), dtype=np.float32)
+                    )  # Concatenate observations into single array
+                rewards[agent_id] = terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
 
         # Only use dones if all agents are done, then we should do a reset.
-        if False not in terminateds.values():
-            terminateds["__all__"] = True
-            # TODO: How to report that only one agent is done? RLlib seems to crash in this simple situation
-        return obs, rewards, {"__all__": False}, {"__all__": False}, infos
+        # if False not in terminateds.values():
+        #    terminateds["__all__"] = True
+        # TODO: How to report that only one agent is done? RLlib seems to crash in this simple situation
+        return obs, rewards, terminateds, truncateds, infos
         # return obs, rewards, terminateds, {"__all__": False}, infos
-
-    def get_policy() -> Tuple[dict, Callable[[AgentID], PolicyID]]:
-        # policy = PolicySpec(observation_space=self.observation_space, action_space=self.action_space)
-
-        # Due to how RLlib works, it seems to be not possible to fetch spaces automatically?
-        # Maybe create a temp environment, get the spaces and destroy that environment?
-        policy = PolicySpec(
-            observation_space=TupleSpace(
-                [
-                    Box(0, 1, (6, 6, 1), int),
-                    Box(-np.inf, np.inf, (126,)),
-                    Box(-np.inf, np.inf, (33,)),
-                ]
-            ),
-            action_space=Box(-1, 1, (20,)),
-        )
-
-        def mapping_fn(agent_id, episode, worker, **kwargs):
-            return "Crawler"
-
-        return {"Crawler": policy}, mapping_fn

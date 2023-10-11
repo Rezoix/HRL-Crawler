@@ -6,7 +6,8 @@ import time
 from distutils.util import strtobool
 
 import gymnasium as gym
-#import gym
+
+# import gym
 import numpy as np
 import torch
 import torch.nn as nn
@@ -16,13 +17,14 @@ from stable_baselines3.common.buffers import ReplayBuffer
 from torch.utils.tensorboard import SummaryWriter
 
 from mlagents_envs.environment import UnityEnvironment
-from mlagents_envs.envs.unity_gym_env import UnityToGymWrapper 
+from mlagents_envs.envs.unity_gym_env import UnityToGymWrapper
 
-from unity_env import BetterUnity3DEnv
+from unity_env_vector import BetterUnity3DEnv
 
 from ray.rllib.utils.replay_buffers.multi_agent_replay_buffer import MultiAgentReplayBuffer
 from ray.rllib.utils.replay_buffers.replay_buffer import ReplayBuffer as RReplayBuffer
 from ray.rllib.policy.sample_batch import SampleBatch, MultiAgentBatch
+
 
 def parse_args():
     # fmt: off
@@ -78,23 +80,19 @@ def parse_args():
     return args
 
 
-
-
-
-
 def make_env(env_id, seed, idx, capture_video, run_name):
     def thunk():
-        """ env = gym.make(env_id)
+        """env = gym.make(env_id)
         env = gym.wrappers.RecordEpisodeStatistics(env)
         if capture_video:
             if idx == 0:
                 env = gym.wrappers.RecordVideo(env, f"videos/{run_name}")
         env.seed(seed)
         env.action_space.seed(seed)
-        env.observation_space.seed(seed) """
-        #worker_id = 0
-        #unity_env = UnityEnvironment(worker_id=worker_id, base_port=5004, timeout_wait=300) #TODO
-        #env = UnityToGymWrapper(unity_env)
+        env.observation_space.seed(seed)"""
+        # worker_id = 0
+        # unity_env = UnityEnvironment(worker_id=worker_id, base_port=5004, timeout_wait=300) #TODO
+        # env = UnityToGymWrapper(unity_env)
         env = BetterUnity3DEnv()
         return env
 
@@ -105,7 +103,9 @@ def make_env(env_id, seed, idx, capture_video, run_name):
 class SoftQNetwork(nn.Module):
     def __init__(self, env):
         super().__init__()
-        self.fc1 = nn.Linear(np.array(env.observation_space.shape).prod() + np.prod(env.action_space.shape), 256)
+        self.fc1 = nn.Linear(
+            np.array(env.observation_space.shape).prod() + np.prod(env.action_space.shape), 256
+        )
         self.fc2 = nn.Linear(256, 256)
         self.fc3 = nn.Linear(256, 1)
 
@@ -115,7 +115,7 @@ class SoftQNetwork(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
-    
+
     def forwards(self, obs, actions):
         """
         Takes multi-agent observations and actions in form of dict {agent_id: observations} and {agent_id: actions}
@@ -140,10 +140,12 @@ class Actor(nn.Module):
         self.fc_logstd = nn.Linear(256, np.prod(env.action_space.shape))
         # action rescaling
         self.register_buffer(
-            "action_scale", torch.tensor((env.action_space.high - env.action_space.low) / 2.0, dtype=torch.float32)
+            "action_scale",
+            torch.tensor((env.action_space.high - env.action_space.low) / 2.0, dtype=torch.float32),
         )
         self.register_buffer(
-            "action_bias", torch.tensor((env.action_space.high + env.action_space.low) / 2.0, dtype=torch.float32)
+            "action_bias",
+            torch.tensor((env.action_space.high + env.action_space.low) / 2.0, dtype=torch.float32),
         )
 
     def forward(self, x):
@@ -152,7 +154,9 @@ class Actor(nn.Module):
         mean = self.fc_mean(x)
         log_std = self.fc_logstd(x)
         log_std = torch.tanh(log_std)
-        log_std = LOG_STD_MIN + 0.5 * (LOG_STD_MAX - LOG_STD_MIN) * (log_std + 1)  # From SpinUp / Denis Yarats
+        log_std = LOG_STD_MIN + 0.5 * (LOG_STD_MAX - LOG_STD_MIN) * (
+            log_std + 1
+        )  # From SpinUp / Denis Yarats
 
         return mean, log_std
 
@@ -216,9 +220,9 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     # env setup
-    #envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name)])
-    #assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
-    # TODO: SyncVectorEnv doesnt work with multi-agent? 
+    # envs = gym.vector.SyncVectorEnv([make_env(args.env_id, args.seed, 0, args.capture_video, run_name)])
+    # assert isinstance(envs.single_action_space, gym.spaces.Box), "only continuous action space is supported"
+    # TODO: SyncVectorEnv doesnt work with multi-agent?
     # Or only the RLlib method where observations are placed into dictionary with all agent names?
 
     # For now only use single environment instance at a time
@@ -246,10 +250,8 @@ if __name__ == "__main__":
     else:
         alpha = args.alpha
 
-    print(env.observation_space,
-        env.action_space)
-    
-    
+    print(env.observation_space, env.action_space)
+
     env.observation_space.dtype = np.float32
     rb = ReplayBuffer(
         args.buffer_size,
@@ -257,7 +259,7 @@ if __name__ == "__main__":
         env.action_space,
         device,
         n_envs=env.n_agents,
-        handle_timeout_termination=False, #testing
+        handle_timeout_termination=False,  # testing
     )
 
     """ rb = RReplayBuffer(
@@ -266,15 +268,15 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # TRY NOT TO MODIFY: start the game
-    obs,_ = env.reset()
+    obs, _ = env.reset()
 
     # envs.reset() returns array of two arrays, with second one being empty. Why?
     # Work around it for now... It seems like it could be the 'infos'?
-    #obs = obs[0]obs
+    # obs = obs[0]obs
     for global_step in range(args.total_timesteps):
         # ALGO LOGIC: put action logic here
         if global_step < args.learning_starts:
-            #actions = np.array([envs.single_action_space.sample() for _ in range(envs.num_envs)])
+            # actions = np.array([envs.single_action_space.sample() for _ in range(envs.num_envs)])
             actions = env.action_space_sample()
         else:
             actions, _, _ = actor.get_action(torch.tensor(obs, device=device))
@@ -340,7 +342,6 @@ if __name__ == "__main__":
             obs[agent_id] = next_obs[agent_id] """
         obs = next_obs
 
-
         # ALGO LOGIC: training.
         if global_step > args.learning_starts:
             data = rb.sample(args.batch_size)
@@ -349,7 +350,9 @@ if __name__ == "__main__":
                 qf1_next_target = qf1_target(data.next_observations, next_state_actions)
                 qf2_next_target = qf2_target(data.next_observations, next_state_actions)
                 min_qf_next_target = torch.min(qf1_next_target, qf2_next_target) - alpha * next_state_log_pi
-                next_q_value = data.rewards.flatten() + (1 - data.dones.flatten()) * args.gamma * (min_qf_next_target).view(-1)
+                next_q_value = data.rewards.flatten() + (1 - data.dones.flatten()) * args.gamma * (
+                    min_qf_next_target
+                ).view(-1)
 
             qf1_a_values = qf1(data.observations, data.actions).view(-1)
             qf2_a_values = qf2(data.observations, data.actions).view(-1)
@@ -417,7 +420,6 @@ if __name__ == "__main__":
                 writer.add_scalar("charts/SPS", int(global_step / (time.time() - start_time)), global_step)
                 if args.autotune:
                     writer.add_scalar("losses/alpha_loss", alpha_loss.item(), global_step) """
-        
 
         # Training logic with RAY Replaybuffers.
         """ if global_step > args.learning_starts:
