@@ -1,18 +1,28 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.MLAgents.Sensors;
+using System.Linq;
 
-
-namespace Unity.MLAgents.Sensors
+public class BinaryGridComponent : GridSensorComponent
 {
-    public class BinaryGridComponent : GridSensorComponent
+    List<BinaryGridSensor> binarySensors;
+    protected override GridSensorBase[] GetGridSensors()
     {
-        protected override GridSensorBase[] GetGridSensors()
-        {
-            List<GridSensorBase> sensorList = new List<GridSensorBase>();
-            var sensor = new BinaryGridSensor(SensorName + "-Binary", CellScale, GridSize, DetectableTags, CompressionType);
-            sensorList.Add(sensor);
-            return sensorList.ToArray();
-        }
+        binarySensors = new List<BinaryGridSensor>();
+        var sensor = new BinaryGridSensor(SensorName + "-Binary", CellScale, GridSize, DetectableTags, CompressionType);
+        binarySensors.Add(sensor);
+        return binarySensors.ToArray();
+    }
+
+    public List<BinaryGridSensor> BinarySensors
+    {
+        get { return binarySensors; }
+    }
+
+    public int GetObjectTag()
+    {
+        return binarySensors.First().LastObjectTag();
     }
 }
+

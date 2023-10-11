@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0.4366757, g: 0.48427194, b: 0.5645252, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -209,6 +209,62 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1683990417}
     m_Modifications:
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1847214253}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1847214253}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 3211995387142974473, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
       propertyPath: m_Name
       value: End_walls
@@ -510,6 +566,62 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1168795776}
     m_Modifications:
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1392820420}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1392820420}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 3211995387142974473, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
       propertyPath: m_Name
       value: End_walls
@@ -672,6 +784,34 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2065982803}
     m_Modifications:
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1663840454}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 3211995387142974473, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
       propertyPath: m_Name
       value: End_walls
@@ -786,7 +926,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5183141455759688339, guid: 33c18365ac242f04e86c3d8954dea646, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2000523710}
   m_SourcePrefab: {fileID: 100100000, guid: 33c18365ac242f04e86c3d8954dea646, type: 3}
 --- !u!4 &523369100 stripped
 Transform:
@@ -863,6 +1006,66 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1591082216}
     m_Modifications:
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1073265774}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1073265774}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1701808876529009209, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3211995387142974473, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
       propertyPath: m_Name
       value: End_walls
@@ -1173,13 +1376,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 705507993}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 16.4, y: 30, z: 18.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1001 &753509178
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1258,6 +1461,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4845971001715176651, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
   m_PrefabInstance: {fileID: 753509178}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &790808318 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+  m_PrefabInstance: {fileID: 753509178}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f81f27f9653f6840abfa93e64c3bc2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &827496386
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1438,13 +1652,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 90, z: 0}
+  m_LocalRotation: {x: 0.5, y: 0, z: 0, w: 0.8660254}
+  m_LocalPosition: {x: 16.5, y: 35, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 60, y: 0, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1452,7 +1666,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 436275a13d4459746955fc6db5953473, type: 3}
   m_Name: 
@@ -1538,6 +1752,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4845971001715176651, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
   m_PrefabInstance: {fileID: 827496386}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1073265774 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+  m_PrefabInstance: {fileID: 827496386}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f81f27f9653f6840abfa93e64c3bc2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1084622711
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1546,6 +1771,62 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 635955738}
     m_Modifications:
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1237759622}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1237759622}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 3211995387142974473, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
       propertyPath: m_Name
       value: End_walls
@@ -1850,10 +2131,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1749945308}
     m_Modifications:
-    - target: {fileID: 4845971001588102144, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
-      propertyPath: agentDoneOnGroundContact
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: TargetPrefab
       value: 
@@ -1902,18 +2179,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Crawler
       objectReference: {fileID: 0}
-    - target: {fileID: 4845971001715176662, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
-      propertyPath: maxJointSpring
-      value: 40000
-      objectReference: {fileID: 0}
-    - target: {fileID: 4845971001715176662, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
-      propertyPath: maxJointForceLimit
-      value: 20000
-      objectReference: {fileID: 0}
-    - target: {fileID: 4845971001715176663, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
-      propertyPath: DecisionPeriod
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1932,6 +2197,62 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2062889580}
     m_Modifications:
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1311043590}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1311043590}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 3211995387142974473, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
       propertyPath: m_Name
       value: End_walls
@@ -2069,11 +2390,33 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4845971001715176651, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
   m_PrefabInstance: {fileID: 1311043583}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1311043590 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+  m_PrefabInstance: {fileID: 1311043583}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f81f27f9653f6840abfa93e64c3bc2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &1387528137 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7663242372573176709, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
   m_PrefabInstance: {fileID: 621110651}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1392820420 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+  m_PrefabInstance: {fileID: 1270874325}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f81f27f9653f6840abfa93e64c3bc2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1519380603 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4845971001715176661, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
@@ -2227,10 +2570,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 193042526}
     m_Modifications:
-    - target: {fileID: 4845971001588102144, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
-      propertyPath: agentDoneOnGroundContact
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: TargetPrefab
       value: 
@@ -2279,18 +2618,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Crawler
       objectReference: {fileID: 0}
-    - target: {fileID: 4845971001715176662, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
-      propertyPath: maxJointSpring
-      value: 40000
-      objectReference: {fileID: 0}
-    - target: {fileID: 4845971001715176662, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
-      propertyPath: maxJointForceLimit
-      value: 20000
-      objectReference: {fileID: 0}
-    - target: {fileID: 4845971001715176663, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
-      propertyPath: DecisionPeriod
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2301,6 +2628,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4845971001715176651, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
   m_PrefabInstance: {fileID: 1663840447}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1663840454 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+  m_PrefabInstance: {fileID: 1663840447}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f81f27f9653f6840abfa93e64c3bc2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1667528895
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2309,6 +2647,58 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1238287685}
     m_Modifications:
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1519380608}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1519380608}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 3211995387142974473, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
       propertyPath: m_Name
       value: End_walls
@@ -2471,6 +2861,62 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1203334323}
     m_Modifications:
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 790808318}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 790808318}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: EndEpisode
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Unity.MLAgents.Agent, Unity.ML-Agents
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onTriggerEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1176044563725820214, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
+      propertyPath: onCollisionEnterEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 3211995387142974473, guid: 0d37a8e10b281fc49812a07798695079, type: 3}
       propertyPath: m_Name
       value: End_walls
@@ -2782,6 +3228,17 @@ Transform:
   - {fileID: 1311043584}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1847214253 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+  m_PrefabInstance: {fileID: 144640326}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f81f27f9653f6840abfa93e64c3bc2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &1858576577
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3076,6 +3533,32 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7663242372573176709, guid: 1521bc4c3ca38144680cad40c93845c4, type: 3}
   m_PrefabInstance: {fileID: 1945220611}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2000523706 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5183141455759688339, guid: 33c18365ac242f04e86c3d8954dea646, type: 3}
+  m_PrefabInstance: {fileID: 489403500}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &2000523710
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2000523706}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &2062889579
 GameObject:
   m_ObjectHideFlags: 0

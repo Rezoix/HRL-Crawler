@@ -22,7 +22,7 @@ public class CrawlerAgent : Agent
         "whereas the CrawlerDynamic & CrawlerStatic agents will run at the speed specified during training "
     )]
     //The walking speed to try and achieve
-    private float m_TargetWalkingSpeed = m_maxWalkingSpeed;
+    private float m_TargetWalkingSpeed = m_maxWalkingSpeed / 2;
 
     const float m_maxWalkingSpeed = 15; //The max walking speed
 
@@ -67,6 +67,8 @@ public class CrawlerAgent : Agent
     public Material groundedMaterial;
     public Material unGroundedMaterial;
 
+    private BinaryGridComponent grid;
+
     public override void Initialize()
     {
         //SpawnTarget(TargetPrefab, transform.position); //spawn target
@@ -87,6 +89,8 @@ public class CrawlerAgent : Agent
         m_JdController.SetupBodyPart(leg2Lower);
         m_JdController.SetupBodyPart(leg3Upper);
         m_JdController.SetupBodyPart(leg3Lower);
+
+        grid = gameObject.GetComponent("BinaryGridComponent") as BinaryGridComponent;
     }
 
     /// <summary>
@@ -115,7 +119,7 @@ public class CrawlerAgent : Agent
         UpdateOrientationObjects();
 
         //Set our goal walking speed
-        TargetWalkingSpeed = m_maxWalkingSpeed;//Random.Range(0.1f, m_maxWalkingSpeed);
+        TargetWalkingSpeed = m_maxWalkingSpeed / 2;//Random.Range(0.1f, m_maxWalkingSpeed);
     }
 
     /// <summary>
@@ -145,7 +149,7 @@ public class CrawlerAgent : Agent
         var avgVel = GetAvgVelocity();
 
         //current ragdoll velocity. normalized
-        sensor.AddObservation(Vector3.Distance(velGoal, avgVel));
+        //sensor.AddObservation(Vector3.Distance(velGoal, avgVel));
         //avg body vel relative to cube
         sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(avgVel));
         //vel goal relative to cube
@@ -169,6 +173,10 @@ public class CrawlerAgent : Agent
         {
             CollectObservationBodyPart(bodyPart, sensor);
         }
+
+        //Get latest obstacle tag id
+        sensor.AddObservation(grid.GetObjectTag());
+
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)

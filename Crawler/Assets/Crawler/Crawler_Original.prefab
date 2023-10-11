@@ -2784,7 +2784,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   agent: {fileID: 0}
-  agentDoneOnGroundContact: 0
+  agentDoneOnGroundContact: 1
   penalizeGroundContact: 1
   groundContactPenalty: -1
   touchingGround: 0
@@ -3130,7 +3130,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 32
+    VectorObservationSize: 33
     NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 20
@@ -3264,8 +3264,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_SensorName: GridSensor
   m_CellScale: {x: 1, y: 1.5, z: 1}
-  m_GridSize: {x: 4, y: 1, z: 8}
-  m_RotateWithAgent: 1
+  m_GridSize: {x: 6, y: 1, z: 6}
+  m_RotateWithAgent: 0
   m_AgentGameObject: {fileID: 0}
   m_DetectableTags:
   - obj_wall
@@ -3276,7 +3276,7 @@ MonoBehaviour:
   - target
   m_ColliderMask:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 1
   m_MaxColliderBufferSize: 500
   m_InitialColliderBufferSize: 4
   m_DebugColors:
