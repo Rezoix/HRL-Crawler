@@ -33,6 +33,28 @@ public class CrawlerAgent : Agent
         set { m_TargetWalkingSpeed = Mathf.Clamp(value, .1f, m_maxWalkingSpeed); }
     }
 
+    [Header("Ray Height Sensors")]
+    [Range(0,100)]
+    [SerializeField]
+    private int m_raySensors = 10;
+
+    [Range(0,5.0f)]
+    [SerializeField]
+    private float m_rayDistance = 1.0f;
+
+    [SerializeField]
+    LayerMask m_layerMaskDown;
+
+    [SerializeField]
+    LayerMask m_layerMaskUp;
+
+
+
+    [SerializeField]
+    private bool drawRayGizmos = false;
+
+
+
     //The direction an agent will walk during training.
     [Header("Target To Walk Towards")]
     public Transform TargetPrefab; //Target prefab to use in Dynamic envs
@@ -67,8 +89,6 @@ public class CrawlerAgent : Agent
     public Material groundedMaterial;
     public Material unGroundedMaterial;
 
-    private BinaryGridComponent grid;
-
     public override void Initialize()
     {
         //SpawnTarget(TargetPrefab, transform.position); //spawn target
@@ -89,8 +109,6 @@ public class CrawlerAgent : Agent
         m_JdController.SetupBodyPart(leg2Lower);
         m_JdController.SetupBodyPart(leg3Upper);
         m_JdController.SetupBodyPart(leg3Lower);
-
-        grid = gameObject.GetComponent("BinaryGridComponent") as BinaryGridComponent;
     }
 
     /// <summary>
@@ -122,6 +140,36 @@ public class CrawlerAgent : Agent
         TargetWalkingSpeed = m_maxWalkingSpeed / 2;//Random.Range(0.1f, m_maxWalkingSpeed);
     }
 
+    void OnDrawGizmos()
+    {
+        if (drawRayGizmos)
+        {
+            Vector3 origin = body.position;
+            origin.y = 3f;
+            RaycastHit hit;
+            for (int i = 0; i < m_raySensors; i++)
+            {
+                Vector3 offset = new Vector3(m_raySensors/2 - i, 0, 0);
+                if (m_raySensors%2==0)
+                {
+                    offset.x -= 0.5f;
+                }
+                
+                offset *= m_rayDistance;
+                if (Physics.Raycast(origin + offset, Vector3.down, out hit, Mathf.Infinity, m_layerMaskDown))
+                {
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawRay(origin + offset, Vector3.down * hit.distance);
+                }
+                else
+                {
+                    Gizmos.color = Color.white;
+                    Gizmos.DrawRay(origin + offset, Vector3.down * 10);
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Add relevant information on each body part to observations.
     /// </summary>
@@ -133,6 +181,28 @@ public class CrawlerAgent : Agent
         if (bp.rb.transform != body)
         {
             sensor.AddObservation(bp.currentStrength / m_JdController.maxJointForceLimit);
+        }
+    }
+
+    public void CollectRayObservations()
+    {
+        Vector3 origin = body.position;
+        origin.y = 3f;
+        RaycastHit hit;
+        for (int i = 0; i < m_raySensors; i++)
+        {
+            //TODO ADD ROTATION
+            Vector3 offset = new Vector3(m_raySensors/2 - i, 0, 0);
+            if (m_raySensors%2==0)
+            {
+                offset.x -= 0.5f;
+            }
+            
+            offset *= m_rayDistance;
+            if (Physics.Raycast(origin + offset, Vector3.down, out hit, Mathf.Infinity))
+            {
+                
+            }
         }
     }
 
@@ -174,8 +244,9 @@ public class CrawlerAgent : Agent
             CollectObservationBodyPart(bodyPart, sensor);
         }
 
-        //Get latest obstacle tag id
-        sensor.AddObservation(grid.GetObjectTag());
+        //Raycast sensors
+        CollectRayObservations();
+        
 
     }
 

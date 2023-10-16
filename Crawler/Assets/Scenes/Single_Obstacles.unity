@@ -1484,6 +1484,22 @@ PrefabInstance:
       propertyPath: TargetPrefab
       value: 
       objectReference: {fileID: 2137147834}
+    - target: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+      propertyPath: m_raySensors
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+      propertyPath: drawRayGizmos
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+      propertyPath: m_rayDistance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4845971001715176649, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
+      propertyPath: m_ColliderMask.m_Bits
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4845971001715176651, guid: a961e4fb2bf9fb14faf7583a495d94de, type: 3}
       propertyPath: m_LocalPosition.x
       value: 8.28
