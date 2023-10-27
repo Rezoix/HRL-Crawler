@@ -3129,7 +3129,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_BrainParameters:
-    VectorObservationSize: 33
+    VectorObservationSize: 51
     NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 20
@@ -3164,6 +3164,16 @@ MonoBehaviour:
   hasUpgradedFromAgentParameters: 1
   MaxStep: 5000
   m_TargetWalkingSpeed: 15
+  m_raySensors: 10
+  m_rayDistance: 0.75
+  m_layerMaskDown:
+    serializedVersion: 2
+    m_Bits: 64
+  m_layerMaskUp:
+    serializedVersion: 2
+    m_Bits: 128
+  drawRayGizmosDown: 0
+  drawRayGizmosUp: 0
   TargetPrefab: {fileID: 0}
   body: {fileID: 4845971001588102148}
   leg0Upper: {fileID: 4845971001327157979}
@@ -3210,6 +3220,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DecisionPeriod: 1
+  DecisionStep: 0
   TakeActionsBetweenDecisions: 0
 --- !u!114 &4845971001715176660
 MonoBehaviour:

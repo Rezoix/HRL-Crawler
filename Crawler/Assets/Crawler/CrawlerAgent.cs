@@ -4,6 +4,7 @@ using Unity.MLAgents.Actuators;
 using Unity.MLAgentsExamples;
 using Unity.MLAgents.Sensors;
 using Random = UnityEngine.Random;
+using System;
 
 [RequireComponent(typeof(JointDriveController))] // Required to set joint forces
 public class CrawlerAgent : Agent
@@ -34,11 +35,11 @@ public class CrawlerAgent : Agent
     }
 
     [Header("Ray Height Sensors")]
-    [Range(0,100)]
+    [Range(0, 100)]
     [SerializeField]
     private int m_raySensors = 10;
 
-    [Range(0,5.0f)]
+    [Range(0, 5.0f)]
     [SerializeField]
     private float m_rayDistance = 1.0f;
 
@@ -49,10 +50,16 @@ public class CrawlerAgent : Agent
     LayerMask m_layerMaskUp;
 
 
-
     [SerializeField]
-    private bool drawRayGizmos = false;
+    private bool drawRayGizmosDown = false;
+    [SerializeField]
+    private bool drawRayGizmosUp = false;
 
+    float m_rayMaxLength = 3f;
+
+
+    float m_initDistanceToTarget;
+    float m_lastDistanceToTarget;
 
 
     //The direction an agent will walk during training.
@@ -109,6 +116,10 @@ public class CrawlerAgent : Agent
         m_JdController.SetupBodyPart(leg2Lower);
         m_JdController.SetupBodyPart(leg3Upper);
         m_JdController.SetupBodyPart(leg3Lower);
+
+        //Initial distance to target
+        m_initDistanceToTarget = (body.position - m_Target.position).magnitude;
+        m_lastDistanceToTarget = m_initDistanceToTarget;
     }
 
     /// <summary>
@@ -138,33 +149,53 @@ public class CrawlerAgent : Agent
 
         //Set our goal walking speed
         TargetWalkingSpeed = m_maxWalkingSpeed / 2;//Random.Range(0.1f, m_maxWalkingSpeed);
+
+        //Initial distance to target
+        m_initDistanceToTarget = (body.position - m_Target.position).magnitude;
+        m_lastDistanceToTarget = m_initDistanceToTarget;
     }
 
     void OnDrawGizmos()
     {
-        if (drawRayGizmos)
+        if (drawRayGizmosDown || drawRayGizmosUp)
         {
             Vector3 origin = body.position;
-            origin.y = 3f;
             RaycastHit hit;
             for (int i = 0; i < m_raySensors; i++)
             {
-                Vector3 offset = new Vector3(m_raySensors/2 - i, 0, 0);
-                if (m_raySensors%2==0)
+                Vector3 offset = body.forward;
+                float mul = m_raySensors / 2 - i - (1 - m_raySensors % 2) * 0.5f;
+                offset *= m_rayDistance * mul;
+                //DOWN Raycasts
+                if (drawRayGizmosDown)
                 {
-                    offset.x -= 0.5f;
+                    origin.y = m_rayMaxLength;
+                    if (Physics.Raycast(origin + offset, Vector3.down, out hit, Mathf.Infinity, m_layerMaskDown))
+                    {
+                        Gizmos.color = Color.red;
+                        Gizmos.DrawRay(origin + offset, Vector3.down * hit.distance);
+                    }
+                    else
+                    {
+                        Gizmos.color = Color.white;
+                        Gizmos.DrawRay(origin + offset, Vector3.down * 10);
+                    }
                 }
-                
-                offset *= m_rayDistance;
-                if (Physics.Raycast(origin + offset, Vector3.down, out hit, Mathf.Infinity, m_layerMaskDown))
+
+                //UP Raycasts
+                if (drawRayGizmosUp)
                 {
-                    Gizmos.color = Color.red;
-                    Gizmos.DrawRay(origin + offset, Vector3.down * hit.distance);
-                }
-                else
-                {
-                    Gizmos.color = Color.white;
-                    Gizmos.DrawRay(origin + offset, Vector3.down * 10);
+                    origin.y = 0f;
+                    if (Physics.Raycast(origin + offset, Vector3.up, out hit, Mathf.Infinity, m_layerMaskUp))
+                    {
+                        Gizmos.color = Color.red;
+                        Gizmos.DrawRay(origin + offset, Vector3.up * hit.distance);
+                    }
+                    else
+                    {
+                        Gizmos.color = Color.white;
+                        Gizmos.DrawRay(origin + offset, Vector3.up * 10);
+                    }
                 }
             }
         }
@@ -184,24 +215,35 @@ public class CrawlerAgent : Agent
         }
     }
 
-    public void CollectRayObservations()
+    public void CollectRayObservations(VectorSensor sensor)
     {
         Vector3 origin = body.position;
-        origin.y = 3f;
         RaycastHit hit;
         for (int i = 0; i < m_raySensors; i++)
         {
-            //TODO ADD ROTATION
-            Vector3 offset = new Vector3(m_raySensors/2 - i, 0, 0);
-            if (m_raySensors%2==0)
+            Vector3 offset = body.forward;
+            float mul = m_raySensors / 2 - i - (1 - m_raySensors % 2) * 0.5f;
+            offset *= m_rayDistance * mul;
+            //DOWN Raycasts
+            origin.y = m_rayMaxLength;
+            if (Physics.Raycast(origin + offset, Vector3.down, out hit, m_rayMaxLength, m_layerMaskDown))
             {
-                offset.x -= 0.5f;
+                sensor.AddObservation(hit.distance / m_rayMaxLength);
             }
-            
-            offset *= m_rayDistance;
-            if (Physics.Raycast(origin + offset, Vector3.down, out hit, Mathf.Infinity))
+            else
             {
-                
+                sensor.AddObservation(1);
+            }
+
+            //UP Raycasts
+            origin.y = 0f;
+            if (Physics.Raycast(origin + offset, Vector3.up, out hit, m_rayMaxLength, m_layerMaskDown))
+            {
+                sensor.AddObservation(hit.distance / m_rayMaxLength);
+            }
+            else
+            {
+                sensor.AddObservation(1);
             }
         }
     }
@@ -214,27 +256,27 @@ public class CrawlerAgent : Agent
         var cubeForward = m_OrientationCube.transform.forward;
 
         //velocity we want to match
-        var velGoal = cubeForward * TargetWalkingSpeed;
+        var velGoal = cubeForward;
         //ragdoll's avg vel
         var avgVel = GetAvgVelocity();
 
         //current ragdoll velocity. normalized
         //sensor.AddObservation(Vector3.Distance(velGoal, avgVel));
         //avg body vel relative to cube
-        sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(avgVel));
+        sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(avgVel)); //3
         //vel goal relative to cube
-        sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(velGoal));
+        sensor.AddObservation(m_OrientationCube.transform.InverseTransformDirection(velGoal)); //3
         //rotation delta
-        sensor.AddObservation(Quaternion.FromToRotation(body.forward, cubeForward));
+        sensor.AddObservation(Quaternion.FromToRotation(body.forward, cubeForward)); //4
 
         //Add pos of target relative to orientation cube
-        sensor.AddObservation(m_OrientationCube.transform.InverseTransformPoint(m_Target.transform.position));
+        sensor.AddObservation(m_OrientationCube.transform.InverseTransformPoint(m_Target.transform.position)); //3
 
         RaycastHit hit;
         float maxRaycastDist = 10;
         if (Physics.Raycast(body.position, Vector3.down, out hit, maxRaycastDist))
         {
-            sensor.AddObservation(hit.distance / maxRaycastDist);
+            sensor.AddObservation(hit.distance / maxRaycastDist); //1
         }
         else
             sensor.AddObservation(1);
@@ -244,9 +286,11 @@ public class CrawlerAgent : Agent
             CollectObservationBodyPart(bodyPart, sensor);
         }
 
+        //31 Obs so far
+
         //Raycast sensors
-        CollectRayObservations();
-        
+        CollectRayObservations(sensor); //2*m_numRaySensors
+
 
     }
 
@@ -302,16 +346,33 @@ public class CrawlerAgent : Agent
 
         var cubeForward = m_OrientationCube.transform.forward;
 
-        // Set reward for this step according to mixture of the following elements.
-        // a. Match target speed
-        //This reward will approach 1 if it matches perfectly and approach zero as it deviates
-        var matchSpeedReward = GetMatchingVelocityReward(cubeForward * TargetWalkingSpeed, GetAvgVelocity());
-
-        // b. Rotation alignment with target direction.
-        //This reward will approach 1 if it faces the target direction perfectly and approach zero as it deviates
+        //Approaches 1 when looking at target, 0 when looking 180 degrees away
         var lookAtTargetReward = (Vector3.Dot(cubeForward, body.forward) + 1) * .5F;
 
-        AddReward(matchSpeedReward * lookAtTargetReward);
+        float distToTarget = (body.position - m_Target.position).magnitude;
+        float deltaDistance = m_lastDistanceToTarget - distToTarget;
+        float deltaDistanceNorm = deltaDistance / m_initDistanceToTarget;
+        m_lastDistanceToTarget = distToTarget;
+
+
+        //Debug.Log(deltaDistanceNorm);
+
+        //Add reward for moving towards the target, normalized such that it adds up to 1 over the whole episode if target is touched
+        AddReward(deltaDistanceNorm);
+
+        //Add reward for looking in the right direction. Requires movement so that the agent does not simply stand still 
+        // Might have problem if the agent learns to look away, walk away from target and then walk in right direction? Maybe penalize more if moving backwards?
+        AddReward(lookAtTargetReward * deltaDistanceNorm * 0.5f);
+
+
+
+
+
+        //AddReward(matchSpeedReward * lookAtTargetReward);
+
+
+
+
     }
 
     /// <summary>
