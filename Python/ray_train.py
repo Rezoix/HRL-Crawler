@@ -1,13 +1,21 @@
 import argparse
 import os
 
+from gymnasium.spaces import Box, MultiDiscrete, Tuple as TupleSpace
+
+import numpy as np
 import ray
 from ray import air, tune
 from ray.rllib.algorithms.ppo import PPOConfig
 from ray.rllib.utils.test_utils import check_learning_achieved
+from ray.rllib.policy.policy import PolicySpec
+from ray.rllib.models import ModelCatalog
 
-from unity_env import BetterUnity3DEnv
+from ray.air.integrations.wandb import WandbLoggerCallback
+
+from unity_env import BetterUnity3DEnv, HRLUnityEnv
 from export import SaveCheckpointCallback
+from hiro import HIROHigh, HIROLow
 
 parser = argparse.ArgumentParser()
 
@@ -28,7 +36,12 @@ parser.add_argument(
     "be achieved within --stop-timesteps AND --stop-iters.",
 )
 parser.add_argument("--stop-iters", type=int, default=9999, help="Number of iterations to train.")
-parser.add_argument("--stop-timesteps", type=int, default=10000000, help="Number of timesteps to train.")
+parser.add_argument(
+    "--stop-timesteps",
+    type=int,
+    default=4000000,
+    help="Number of timesteps to train. Measured in environment steps.",
+)
 parser.add_argument(
     "--stop-reward",
     type=float,
@@ -49,23 +62,86 @@ if __name__ == "__main__":
 
     ray.init(num_gpus=args.gpus)
 
-    timescale = 1.25
+    timescale = 1.0
 
-    tune.register_env(
-        "unity3d",
-        lambda c: BetterUnity3DEnv(
-            file_name=c["file_name"],
-            no_graphics=(c["file_name"] is not None),
-            episode_horizon=c["episode_horizon"],
-            timescale=timescale,
-        ),
-    )
+    use_hrl = True
 
-    # Get policies (different agent types; "behaviors" in MLAgents) and
-    # the mappings from individual agents to Policies.
-    policies, policy_mapping_fn = BetterUnity3DEnv.get_policy()
+    if use_hrl:
+        ModelCatalog.register_custom_model("HIROHigh", HIROHigh)
+        ModelCatalog.register_custom_model("HIROLow", HIROLow)
+
+        tune.register_env(
+            "unity3d",
+            lambda c: HRLUnityEnv(
+                file_name=c["file_name"],
+                no_graphics=(c["file_name"] is not None),
+                episode_horizon=c["episode_horizon"],
+                timescale=timescale,
+                high_level_steps=25,
+            ),
+        )
+
+        def policy_mapping_fn(agent_id, episode, worker, **kwargs):
+            if agent_id.startswith("low_level_"):
+                return "policy_low"
+            else:
+                return "policy_high"
+
+        goal_vector_length = 10
+        goal_vector_space = Box(0, 1, (goal_vector_length,))
+
+        policies = {
+            "policy_high": PolicySpec(
+                observation_space=TupleSpace(
+                    [
+                        Box(-np.inf, np.inf, (126,)),
+                        Box(-np.inf, np.inf, (51,)),
+                    ]
+                ),
+                action_space=goal_vector_space,  # Goal vector
+                config={
+                    "model": {
+                        "custom_model": "HIROHigh",
+                        "custom_model_config": {"fc_size": 512, "goal_size": goal_vector_length},
+                    }
+                },
+            ),
+            "policy_low": PolicySpec(
+                observation_space=TupleSpace(
+                    [
+                        Box(-np.inf, np.inf, (126,)),
+                        Box(-np.inf, np.inf, (51,)),
+                        goal_vector_space,  # Goal vector
+                    ]
+                ),
+                action_space=Box(-1, 1, (20,)),
+                config={
+                    "model": {
+                        "custom_model": "HIROLow",
+                        "custom_model_config": {"fc_size": 512, "goal_size": goal_vector_length},
+                    }
+                },
+            ),
+        }
+
+    else:  # Normal training without HRL
+        tune.register_env(
+            "unity3d",
+            lambda c: BetterUnity3DEnv(
+                file_name=c["file_name"],
+                no_graphics=(c["file_name"] is not None),
+                episode_horizon=c["episode_horizon"],
+                timescale=timescale,
+            ),
+        )
+
+        # Get policies (different agent types; "behaviors" in MLAgents) and
+        # the mappings from individual agents to Policies.
+        policies, policy_mapping_fn = BetterUnity3DEnv.get_policy()
 
     enable_rl_module = True
+
+    num_envs = args.num_workers if args.file_name else 1
 
     config = (
         PPOConfig()
@@ -88,18 +164,14 @@ if __name__ == "__main__":
             lambda_=0.95,
             gamma=0.995,  # discount factor
             entropy_coeff=0.005,  # beta?
-            sgd_minibatch_size=2048,  # batch_size?
-            train_batch_size=2048 * 8,  # 20480  # buffer_size?
+            sgd_minibatch_size=args.horizon * 2,  # batch_size?
+            train_batch_size=args.horizon * 4 * 10 * num_envs,  # 20480  # buffer_size?
             num_sgd_iter=3,  # num_epoch?
             clip_param=0.2,  # epsilon?
-            model={"fcnet_hiddens": [512, 512, 512]},
+            # model={"fcnet_hiddens": [512, 512, 512]},
             _enable_learner_api=enable_rl_module,
         )
-        .multi_agent(
-            policies=policies,
-            policy_mapping_fn=policy_mapping_fn,
-            count_steps_by="env_steps",  # "agent_steps"?
-        )
+        .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn, count_steps_by="env_steps")
         .resources(
             num_gpus=args.gpus,
             num_gpus_per_worker=1 / (args.num_workers if args.num_workers > 0 else 1),
@@ -125,12 +197,7 @@ if __name__ == "__main__":
                     checkpoint_frequency=5,
                     checkpoint_at_end=True,
                 ),
-                callbacks=[
-                    SaveCheckpointCallback(
-                        ["Crawler"],
-                        args.model_path,
-                    )
-                ],
+                callbacks=[WandbLoggerCallback(project="HRL-Crawler")],
             ),
         )
 

@@ -44,3 +44,14 @@ TODO: ppo_continuous_action jatkaa muuttamista multi-agentiksi. Pitää tehdä o
 Unity ML-Agents GridSensorComponentissa bugi, joka ilmenee kun grid ei ole neliön mallinen (esim. 4x4). Jos grid on suorakaiteen mallinen (esim. 6x4)
 tulee IndexOutOfRangeException. Rivi 327 tiedostossa com.unity.ml-agents/Runtime/Sensors/GridSensorBase.cs, indeksointi on väärin; vaihtaa w ja h paikat
 päittäin, niin silloin toimii.
+
+
+#### 20.10 ####
+Ray RLlib:llä vaikea toteuttaa HRL... Ei oikeastaan mitään helppoa tapaa toteuttaa. 
+Vaatii erilliset policyt eri tason "agenteille". Sotkee tähän viellä multi-agent ympäristön niin on sotku.
+
+
+#### 24.10 ####
+Piti tehdä erillinen ympäristöpalikka, jossa erikseen high ja low level step. 
+Debuggaaminen RLlibillä HYVIN vaikeaa, koska ainakaan vscodessa lisätyt breakpointit ei tee mitään. 
+Ilmeisesti Rayllä on oma debuggeri? Ei vaikutakovin selkokäyttöiseltä kylläkään...

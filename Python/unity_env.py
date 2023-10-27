@@ -332,9 +332,8 @@ class BetterUnity3DEnv(MultiAgentEnv):
         policy = PolicySpec(
             observation_space=TupleSpace(
                 [
-                    Box(0, 1, (6, 6, 1), int),
                     Box(-np.inf, np.inf, (126,)),
-                    Box(-np.inf, np.inf, (33,)),
+                    Box(-np.inf, np.inf, (51,)),
                 ]
             ),
             action_space=Box(-1, 1, (20,)),
@@ -344,3 +343,219 @@ class BetterUnity3DEnv(MultiAgentEnv):
             return "Crawler"
 
         return {"Crawler": policy}, mapping_fn
+
+
+# https://github.com/ray-project/ray/blob/be2606e1cd41c9743e2b53222b8e029395984343/rllib/examples/env/windy_maze_env.py
+# Above only works for single agent. Requires significant modification to make work in multi-agent environemnt
+class HRLUnityEnv(BetterUnity3DEnv):
+    def __init__(
+        self,
+        file_name: str = None,
+        port: Optional[int] = None,
+        seed: int = 0,
+        no_graphics: bool = False,
+        timeout_wait: int = 30,
+        episode_horizon: int = 1000,
+        soft_horizon: bool = True,
+        timescale: int = 1.0,
+        high_level_steps: int = 25,
+    ):
+        super().__init__(
+            file_name,
+            port,
+            seed,
+            no_graphics,
+            timeout_wait,
+            episode_horizon,
+            soft_horizon,
+            timescale,
+        )
+        self.max_high_level_steps = high_level_steps
+
+        # Used for indexing dictionaries
+        self._agent_ids = set(self.unity_env.get_steps(self.name)[0].agent_id)
+
+    def reset(self, *, seed=None, options=None) -> Tuple[MultiAgentDict, MultiAgentDict]:
+        self.episode_timesteps = 0
+
+        self.current_goal = {id: np.zeros((10,), dtype=np.float32) for id in self._agent_ids}
+        self.steps_remaining_at_level = {id: None for id in self._agent_ids}
+        self.num_high_level_steps = {id: 0 for id in self._agent_ids}
+        self.low_level_agent_id = {id: f"low_level_{0}" for id in self._agent_ids}
+        self.cur_obs = {id: None for id in self._agent_ids}
+
+        if not self.soft_horizon:
+            self.unity_env.reset()
+        _, _, _, _, infos = self._get_step_results()
+
+        obs = {f"high_level_{id}": self.cur_obs[id] for id in self._agent_ids}
+
+        # print("Reset Done")
+
+        return obs, infos
+
+    def step(
+        self, action_dict: MultiAgentDict
+    ) -> Tuple[MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict]:
+        # print(f"Step start: {self.episode_timesteps}")
+        # print(action_dict.keys())
+        obs_h, rew_h, terminateds_h, truncateds_h, infos_h = self._high_level_step(action_dict)
+        obs_l, rew_l, terminateds_l, truncateds_l, infos_l = self._low_level_step(action_dict)
+
+        obs_h.update(obs_l)
+        rew_h.update(rew_l)
+        terminateds_h.update(terminateds_l)
+        truncateds_h.update(truncateds_l)
+        infos_h.update(infos_l)
+
+        if False not in terminateds_h.values():
+            terminateds_h["__all__"] = True
+
+        if False not in truncateds_h.values():
+            truncateds_h["__all__"] = True
+
+        return obs_h, rew_h, terminateds_h, truncateds_h, infos_h
+
+    def _high_level_step(self, action_dict):
+        # The high level step, setting goal vector
+        obs = {}
+        rew = {}
+        terminateds = {}
+        truncateds = {}
+        infos = {}
+        for key, action in action_dict.items():
+            if "high_level" in key:
+                agent_id = int(key.split("_")[-1])
+                self.current_goal[agent_id] = action
+
+                self.steps_remaining_at_level[agent_id] = self.max_high_level_steps
+                self.num_high_level_steps[agent_id] += 1
+                self.low_level_agent_id[
+                    agent_id
+                ] = f"low_level_{agent_id}_{self.num_high_level_steps[agent_id]}"
+                # f"low_level_{agent_id}_{self.num_high_level_steps[agent_id]}"
+
+                obs[self.low_level_agent_id[agent_id]] = self.cur_obs[agent_id] + (
+                    self.current_goal[agent_id],
+                )
+                # [self.cur_obs[agent_id], self.current_goal[agent_id]]
+                rew[self.low_level_agent_id[agent_id]] = 0
+                terminateds[self.low_level_agent_id[agent_id]] = False
+                truncateds[self.low_level_agent_id[agent_id]] = False
+
+        return obs, rew, terminateds, truncateds, infos
+
+    def _low_level_step(self, action_dict):
+        from mlagents_envs.base_env import ActionTuple
+
+        # Set only the required actions (from the DecisionSteps) in Unity3D.
+        all_agents = []
+        for behavior_name in self.unity_env.behavior_specs:
+            actions = []
+            for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
+                key = self.low_level_agent_id[agent_id]
+                all_agents.append(key)
+
+                if key not in action_dict:
+                    actions.append(np.full((self.action_size), 0, dtype=np.float32))
+                else:
+                    self.steps_remaining_at_level[agent_id] -= 1
+                    actions.append(action_dict[key])
+            if actions:
+                # force continuous actions for the moment
+                if actions[0].dtype == np.float32:
+                    action_tuple = ActionTuple(continuous=np.array(actions))
+                else:
+                    action_tuple = ActionTuple(discrete=np.array(actions))
+                self.unity_env.set_actions(behavior_name, action_tuple)
+
+        # Do the step.
+        self.unity_env.step()
+
+        obs, rewards, terminateds, truncateds, infos = self._get_step_results()
+
+        # Global horizon reached? -> Return __all__ truncated=True, so user
+        # can reset. Set all agents' individual `truncated` to True as well.
+        self.episode_timesteps += 1
+        if self.episode_timesteps >= self.episode_horizon:
+            truncateds = dict(
+                {"__all__": True}, **{self.low_level_agent_id[agent_id]: True for agent_id in self._agent_ids}
+            )
+            """ return (
+                obs,
+                rewards,
+                terminateds,
+                dict({"__all__": True}, **{agent_id: True for agent_id in all_agents}),
+                infos,
+            ) """
+
+        return obs, rewards, terminateds, truncateds, infos
+
+    def _get_step_results(self):
+        """Collects those agents' obs/rewards that have to act in next `step`.
+        Returns:
+            Tuple:
+                obs: Multi-agent observation dict.
+                    Only those observations for which to get new actions are
+                    returned.
+                rewards: Rewards dict matching `obs`.
+                dones: Done dict with only an __all__ multi-agent entry in it.
+                    __all__=True, if episode is done for all agents.
+                infos: An (empty) info dict.
+        """
+        obs = {}
+        rewards = {}
+        terminateds = {"__all__": False}
+        infos = {}
+        i = 0
+        for behavior_name in self.unity_env.behavior_specs:
+            decision_steps, terminal_steps = self.unity_env.get_steps(behavior_name)
+            # Important: Only update those sub-envs that are currently
+            # available within _env_state.
+            # Loop through all envs ("agents") and fill in, whatever
+            # information we have.
+            # print(decision_steps.agent_id_to_index.items())
+
+            for agent_id, idx in decision_steps.agent_id_to_index.items():
+                key = self.low_level_agent_id[agent_id]
+                os = tuple(o[idx] for o in decision_steps.obs)
+                os = os[0] if len(os) == 1 else os
+                self.cur_obs[agent_id] = os
+                obs[key] = os + (self.current_goal[agent_id],)
+
+                rewards[key] = decision_steps.reward[idx] + decision_steps.group_reward[idx]
+                i += 1
+
+                if self.steps_remaining_at_level[agent_id] == 0:
+                    # Terminate low level agent
+                    terminateds[key] = True
+
+                    key_high = f"high_level_{agent_id}"
+                    obs[key_high] = self.cur_obs[agent_id]
+                    rewards[key_high] = rewards[key]
+                else:
+                    terminateds[key] = False
+
+            for agent_id, idx in terminal_steps.agent_id_to_index.items():
+                key = self.low_level_agent_id[agent_id]
+                terminateds[key] = True
+                # Only overwrite rewards (last reward in episode), b/c obs
+                # here is the last obs (which doesn't matter anyways).
+                # Unless key does not exist in obs.
+                if key not in obs:
+                    os = tuple(o[idx] for o in terminal_steps.obs)
+                    os = os[0] if len(os) == 1 else os
+                    self.cur_obs[agent_id] = os
+                    obs[key] = os + (self.current_goal[agent_id],)
+                rewards[key] = terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
+
+                key_high = f"high_level_{agent_id}"
+                obs[key_high] = self.cur_obs[agent_id]
+                rewards[key_high] = rewards[key]
+
+        # Only use dones if all agents are done, then we should do a reset.
+        # if False not in terminateds.values():
+        #    terminateds["__all__"] = True
+        #    # TODO: How to report that only one agent is done? RLlib seems to crash in this simple situation
+
+        return obs, rewards, terminateds, {"__all__": False}, infos
