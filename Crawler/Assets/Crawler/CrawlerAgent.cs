@@ -64,6 +64,7 @@ public class CrawlerAgent : Agent
 
     //The direction an agent will walk during training.
     [Header("Target To Walk Towards")]
+    public bool useDynamicTarget = false;
     public Transform TargetPrefab; //Target prefab to use in Dynamic envs
     private Transform m_Target; //Target the agent will walk towards during training.
 
@@ -98,9 +99,15 @@ public class CrawlerAgent : Agent
 
     public override void Initialize()
     {
-        //SpawnTarget(TargetPrefab, transform.position); //spawn target
+        if (useDynamicTarget)
+        {
+            SpawnTarget(TargetPrefab, transform.position); 
+        } else {
+            m_Target = TargetPrefab;
+        }
+        ////spawn target
         //Use Static target, included with the environment rather than spawning a new one
-        m_Target = TargetPrefab;
+        
 
         m_OrientationCube = GetComponentInChildren<OrientationCubeController>();
         m_DirectionIndicator = GetComponentInChildren<DirectionIndicator>();
