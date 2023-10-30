@@ -3174,6 +3174,7 @@ MonoBehaviour:
     m_Bits: 128
   drawRayGizmosDown: 0
   drawRayGizmosUp: 0
+  useDynamicTarget: 0
   TargetPrefab: {fileID: 0}
   body: {fileID: 4845971001588102148}
   leg0Upper: {fileID: 4845971001327157979}
@@ -3219,8 +3220,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DecisionPeriod: 1
-  DecisionStep: 0
+  DecisionPeriod: 5
   TakeActionsBetweenDecisions: 0
 --- !u!114 &4845971001715176660
 MonoBehaviour:
