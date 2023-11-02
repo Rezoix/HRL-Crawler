@@ -60,11 +60,11 @@ parser.add_argument("--gpus", type=int, default=1, help="How many GPUs should be
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    ray.init(num_gpus=args.gpus)
+    ray.init(num_gpus=args.gpus)  # , local_mode=True)
 
-    timescale = 1.0
+    timescale = 5
 
-    use_hrl = True
+    use_hrl = False
 
     if use_hrl:
         ModelCatalog.register_custom_model("HIROHigh", HIROHigh)
@@ -77,7 +77,7 @@ if __name__ == "__main__":
                 no_graphics=(c["file_name"] is not None),
                 episode_horizon=c["episode_horizon"],
                 timescale=timescale,
-                high_level_steps=25,
+                high_level_steps=10,
             ),
         )
 
@@ -102,7 +102,7 @@ if __name__ == "__main__":
                 config={
                     "model": {
                         "custom_model": "HIROHigh",
-                        "custom_model_config": {"fc_size": 512, "goal_size": goal_vector_length},
+                        "custom_model_config": {"fc_size": 512},
                     }
                 },
             ),
@@ -164,14 +164,16 @@ if __name__ == "__main__":
             lambda_=0.95,
             gamma=0.995,  # discount factor
             entropy_coeff=0.005,  # beta?
-            sgd_minibatch_size=args.horizon * 2,  # batch_size?
-            train_batch_size=args.horizon * 4 * 10 * num_envs,  # 20480  # buffer_size?
+            sgd_minibatch_size=args.horizon,  # batch_size?
+            train_batch_size=args.horizon * 2 * 10 * num_envs,  # 20480  # buffer_size?
             num_sgd_iter=3,  # num_epoch?
             clip_param=0.2,  # epsilon?
-            # model={"fcnet_hiddens": [512, 512, 512]},
+            model={"fcnet_hiddens": [512, 512, 512]},
             _enable_learner_api=enable_rl_module,
         )
-        .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_fn, count_steps_by="env_steps")
+        .multi_agent(
+            policies=policies, policy_mapping_fn=policy_mapping_fn, count_steps_by="env_steps"
+        )  # Preferably use "env_steps" with HRL, because there are two different levels of policies, which messes up agent step count?
         .resources(
             num_gpus=args.gpus,
             num_gpus_per_worker=1 / (args.num_workers if args.num_workers > 0 else 1),
@@ -197,7 +199,12 @@ if __name__ == "__main__":
                     checkpoint_frequency=5,
                     checkpoint_at_end=True,
                 ),
-                callbacks=[WandbLoggerCallback(project="HRL-Crawler")],
+                callbacks=[
+                    WandbLoggerCallback(
+                        project="HRL-Crawler",
+                        group="No HRL, flat dynamic",
+                    )
+                ],
             ),
         )
 

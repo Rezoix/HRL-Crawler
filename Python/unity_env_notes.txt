@@ -2,6 +2,9 @@
 - Support soft resets 
 	- Not sure if I ended up using this or not
 	- Idea is to not reset env when ray horizon is reached, as horizon is typically 100-1000 steps, while episodes may last for 1000's of steps
+	- Does not work with decision step higher than 1 in Unity
+		- Not all agents will have an observation when calling environment reset() which results in observations being empty (None)
+		- rllib breaks, as it assumes all agents have observation after reset() being called, which is not true with higher decision step settings
 - Horizon has off-by-one bug (fixed)
 - Support setting unique fixed seed for each unity instance
 - Update to ray==2.3.0
@@ -14,6 +17,10 @@ NEW MODIFICATIONS:
 - Gather information from the environment
 	- Get the number of agents
 	- Get action and observation spaces automatically (no need to manually specify)
+	- Does not seem to be actually usable with rllib? rllib needs the spaces BEFORE initializing the environment
+- Two-level HRL policy support
+	- Separate steps for each level of policies
+	- Perhaps could be done with single policy and a custom model?
 
 VECTOR Version (for cleanrl):
 - Use Gymnasium "standard" format rather than rllib dictionary format

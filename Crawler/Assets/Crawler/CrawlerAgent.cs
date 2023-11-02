@@ -101,13 +101,15 @@ public class CrawlerAgent : Agent
     {
         if (useDynamicTarget)
         {
-            SpawnTarget(TargetPrefab, transform.position); 
-        } else {
+            SpawnTarget(TargetPrefab, transform.position);
+        }
+        else
+        {
             m_Target = TargetPrefab;
         }
         ////spawn target
         //Use Static target, included with the environment rather than spawning a new one
-        
+
 
         m_OrientationCube = GetComponentInChildren<OrientationCubeController>();
         m_DirectionIndicator = GetComponentInChildren<DirectionIndicator>();
@@ -369,7 +371,7 @@ public class CrawlerAgent : Agent
 
         //Add reward for looking in the right direction. Requires movement so that the agent does not simply stand still 
         // Might have problem if the agent learns to look away, walk away from target and then walk in right direction? Maybe penalize more if moving backwards?
-        AddReward(lookAtTargetReward * deltaDistanceNorm * 0.5f);
+        //AddReward(lookAtTargetReward * deltaDistanceNorm * 0.5f);
 
 
 

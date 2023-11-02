@@ -55,3 +55,23 @@ Vaatii erilliset policyt eri tason "agenteille". Sotkee tähän viellä multi-ag
 Piti tehdä erillinen ympäristöpalikka, jossa erikseen high ja low level step. 
 Debuggaaminen RLlibillä HYVIN vaikeaa, koska ainakaan vscodessa lisätyt breakpointit ei tee mitään. 
 Ilmeisesti Rayllä on oma debuggeri? Ei vaikutakovin selkokäyttöiseltä kylläkään...
+
+
+
+#### 31.10 ####
+Decision period 1 tuntui hidastavan koulutusta huomattavasti (ml-agents koulutti kävelevän agentin 15min?, baseline PPO rllibillä kesti ainakin 1-2h että agentti pysyy pystyssä)
+Decision period asetettiin 1:ksi, koska koulutus kaatui aikaisemmin. Ilmeisesti ongelma tässä on unity_env.py:n soft_horizon, joka estää
+kaikkien agenttien ns. oikean resetoinnin kun horizon tulee vastaan. Tällöin kun tapahtuu reset, osalla agenteista observaatio on None, joka hajoittaa rllibin.
+Korjaus tähän (ilmeisesti) on poistaa soft_horizon käytöstä.
+
+Decision period 1 myötä oli käytännössä mahdotonta käyttää isompaa timescale arvoa, koska unity pyytää uudet actionit jokaisella timestepillä -> python puoli "ylikuormittuu"
+-> unity pyörii 1fps jos period on 2
+
+Soft_horizon käytöstä poiston jälkeen unity pyörii ~6-10fps period 5:lla.
+
+
+#### 1.11 ####
+Keskeneräisellä HRL toteutuksella agentti oppi kävelemään jossain määrin jo ~10min kohdalla. Erityisesti ottaen huomioon koulutuksen lisähaasteen HRL lisäyksestä, koulutus on huomattavasti nopeampaa.
+Koulutusta tarkkailtaessa useampaan otteeseen agentti onnistui tekemään voltin, ja muutenkin hyppäämään. Erittäin mielenkiintoista onnistuisiko tuollaisten liikkeiden eristäminen "skilleiksi".
+Huomattavaa myös, että agentin reward on vielä ainakin kyseenalainen?
+

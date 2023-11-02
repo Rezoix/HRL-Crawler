@@ -42,7 +42,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
         no_graphics: bool = False,
         timeout_wait: int = 30,
         episode_horizon: int = 1000,
-        soft_horizon: bool = True,
+        soft_horizon: bool = False,
         timescale: int = 1.0,
     ):
         """Initializes a Unity3DEnv object.
@@ -356,7 +356,7 @@ class HRLUnityEnv(BetterUnity3DEnv):
         no_graphics: bool = False,
         timeout_wait: int = 30,
         episode_horizon: int = 1000,
-        soft_horizon: bool = True,
+        soft_horizon: bool = False,
         timescale: int = 1.0,
         high_level_steps: int = 25,
     ):

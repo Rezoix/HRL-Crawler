@@ -18,7 +18,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/ray_train.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": false,
+            "subProcess": true
         },
         {
             "name": "CleanRL PPO",
