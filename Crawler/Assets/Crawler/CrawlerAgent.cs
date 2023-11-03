@@ -367,18 +367,23 @@ public class CrawlerAgent : Agent
         //Debug.Log(deltaDistanceNorm);
 
         //Add reward for moving towards the target, normalized such that it adds up to 1 over the whole episode if target is touched
-        AddReward(deltaDistanceNorm);
+        //AddReward(deltaDistanceNorm);
 
         //Add reward for looking in the right direction. Requires movement so that the agent does not simply stand still 
         // Might have problem if the agent learns to look away, walk away from target and then walk in right direction? Maybe penalize more if moving backwards?
         //AddReward(lookAtTargetReward * deltaDistanceNorm * 0.5f);
 
 
+        // Velocity of agent multiplied by cos of angle between target and velocity
+        // i.e. reward 0 for moving 90 degrees from the target vector, -1*velocity for moving directly away and 1*velocity for moving towards target
+        var velReward = Vector3.Dot(cubeForward, GetAvgVelocity());
+        AddReward(velReward);
 
 
 
+        // Original agent reward
+        //var matchSpeedReward = GetMatchingVelocityReward(cubeForward * TargetWalkingSpeed, GetAvgVelocity());
         //AddReward(matchSpeedReward * lookAtTargetReward);
-
 
 
 
