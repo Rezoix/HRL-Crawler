@@ -286,7 +286,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
         """
         obs = {}
         rewards = {}
-        terminateds = {"__all__": False}
+        terminateds = {}
         infos = {}
         i = 0
         for behavior_name in self.unity_env.behavior_specs:
@@ -318,11 +318,14 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 rewards[key] = terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
 
         # Only use dones if all agents are done, then we should do a reset.
-        if False not in terminateds.values():
+        if False not in terminateds.values() and len(terminateds) > 0:
             terminateds["__all__"] = True
+        else:
+            terminateds["__all__"] = False
             # TODO: How to report that only one agent is done? RLlib seems to crash in this simple situation
-        return obs, rewards, {"__all__": False}, {"__all__": False}, infos
-        # return obs, rewards, terminateds, {"__all__": False}, infos
+        
+        #return obs, rewards, {"__all__": False}, {"__all__": False}, infos
+        return obs, rewards, terminateds, {"__all__": False}, infos
 
     def get_policy() -> Tuple[dict, Callable[[AgentID], PolicyID]]:
         # policy = PolicySpec(observation_space=self.observation_space, action_space=self.action_space)
