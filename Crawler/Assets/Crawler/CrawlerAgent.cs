@@ -310,8 +310,29 @@ public class CrawlerAgent : Agent
 
         var continuousActions = actionBuffers.ContinuousActions;
         var i = -1;
+
         // Pick a new target joint rotation
-        bpDict[leg0Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
+        bpDict[leg0Upper].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0);
+        bpDict[leg1Upper].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0);
+        bpDict[leg2Upper].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0);
+        bpDict[leg3Upper].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0);
+        bpDict[leg0Lower].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0, 0);
+        bpDict[leg1Lower].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0, 0);
+        bpDict[leg2Lower].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0, 0);
+        bpDict[leg3Lower].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0, 0);
+
+        // Update joint strength
+        bpDict[leg0Upper].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg1Upper].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg2Upper].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg3Upper].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg0Lower].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg1Lower].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg2Lower].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg3Lower].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+
+
+        /* bpDict[leg0Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[leg1Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[leg2Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[leg3Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
@@ -328,7 +349,7 @@ public class CrawlerAgent : Agent
         bpDict[leg0Lower].SetJointStrength(continuousActions[++i]);
         bpDict[leg1Lower].SetJointStrength(continuousActions[++i]);
         bpDict[leg2Lower].SetJointStrength(continuousActions[++i]);
-        bpDict[leg3Lower].SetJointStrength(continuousActions[++i]);
+        bpDict[leg3Lower].SetJointStrength(continuousActions[++i]); */
     }
 
     void FixedUpdate()
@@ -376,14 +397,15 @@ public class CrawlerAgent : Agent
 
         // Velocity of agent multiplied by cos of angle between target and velocity
         // i.e. reward 0 for moving 90 degrees from the target vector, -1*velocity for moving directly away and 1*velocity for moving towards target
-        var velReward = Vector3.Dot(cubeForward, GetAvgVelocity());
-        AddReward(velReward);
+        // Divide by 15 to scale the reward to a more appropriate value
+        //var velReward = Vector3.Dot(cubeForward, GetAvgVelocity()) / 15.0f;
+        //AddReward(velReward);
 
 
 
         // Original agent reward
-        //var matchSpeedReward = GetMatchingVelocityReward(cubeForward * TargetWalkingSpeed, GetAvgVelocity());
-        //AddReward(matchSpeedReward * lookAtTargetReward);
+        var matchSpeedReward = GetMatchingVelocityReward(cubeForward * TargetWalkingSpeed, GetAvgVelocity());
+        AddReward(matchSpeedReward * lookAtTargetReward);
 
 
 

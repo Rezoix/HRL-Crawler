@@ -3221,6 +3221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DecisionPeriod: 5
+  DecisionStep: 0
   TakeActionsBetweenDecisions: 0
 --- !u!114 &4845971001715176660
 MonoBehaviour:
