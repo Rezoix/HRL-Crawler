@@ -5,19 +5,11 @@ from gymnasium.spaces import Box, MultiDiscrete, Tuple as TupleSpace
 
 import numpy as np
 import ray
-import torch
-from ray import air, tune
-from ray.rllib.algorithms.ppo import PPOConfig
-from ray.rllib.utils.test_utils import check_learning_achieved
 from ray.rllib.policy.policy import PolicySpec
 from ray.rllib.models import ModelCatalog
-from ray.rllib.algorithms.algorithm import Algorithm
 from ray.rllib.policy.policy import Policy
 
-from ray.air.integrations.wandb import WandbLoggerCallback
-
 from unity_env import BetterUnity3DEnv, HRLUnityEnv
-from export import SaveCheckpointCallback
 from hiro import HIROHigh, HIROLow
 
 parser = argparse.ArgumentParser()
@@ -45,9 +37,9 @@ parser.add_argument(
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    ray.init()  # , local_mode=True)
+    ray.init()
 
-    timescale = 1
+    timescale = 1.0
 
     use_hrl = False
 
@@ -130,11 +122,11 @@ if __name__ == "__main__":
             ob = np.concatenate(value)
             act = algo["Crawler"].compute_single_action(ob)
             actions[key] = act[0]
-        # actions = algo["Crawler"].compute_single_action(obs)
+
         obs, rewards, terminateds, truncateds, infos = env.step(actions)
         episode_reward += sum(rewards.values())
 
         if terminateds["__all__"] or truncateds["__all__"]:
-            print("EP reward:" + episode_reward)
+            print(f"EP reward: {episode_reward}")
             episode_reward = 0
             obs, info = env.reset()
