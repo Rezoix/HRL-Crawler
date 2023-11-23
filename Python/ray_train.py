@@ -28,7 +28,8 @@ parser.add_argument(
     help="The Unity3d binary (compiled) game filepath.",
 )
 
-parser.add_argument("--num-workers", type=int, default=4)
+parser.add_argument("--num-workers", type=int, default=1)
+parser.add_argument("--num-envs", type=int, default=4)
 parser.add_argument(
     "--as-test",
     action="store_true",
@@ -141,7 +142,7 @@ if __name__ == "__main__":
 
     enable_rl_module = True
 
-    num_envs = args.num_workers if args.file_name else 1
+    # num_envs = 4  # args.num_workers if args.file_name else 1
 
     config = (
         PPOConfig()
@@ -156,7 +157,8 @@ if __name__ == "__main__":
         .framework("torch")
         .rollouts(
             num_rollout_workers=args.num_workers if args.file_name else 0,
-            rollout_fragment_length=int(args.horizon / 20),
+            num_envs_per_worker=int(args.num_envs / args.num_workers),
+            rollout_fragment_length=int(args.horizon / 10),
         )
         .rl_module(_enable_rl_module_api=enable_rl_module)
         .training(
@@ -165,7 +167,7 @@ if __name__ == "__main__":
             gamma=0.995,  # discount factor
             entropy_coeff=0.005,  # beta?
             sgd_minibatch_size=int(args.horizon / 10),  # batch_size?
-            train_batch_size=args.horizon * num_envs,  # 20480  # buffer_size?
+            train_batch_size=args.horizon * args.num_envs,  # 20480  # buffer_size?
             num_sgd_iter=3,  # num_epoch?
             clip_param=0.6,  # epsilon?
             kl_target=0.1,
