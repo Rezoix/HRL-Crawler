@@ -45,7 +45,7 @@ parser.add_argument(
 parser.add_argument(
     "--stop-reward",
     type=float,
-    default=9999.0,
+    default=99999.0,
     help="Reward at which we stop training.",
 )
 parser.add_argument(
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     ray.init(num_gpus=args.gpus)  # , local_mode=True)
 
-    timescale = 5
+    timescale = 4
 
     use_hrl = False
 
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         .framework("torch")
         .rollouts(
             num_rollout_workers=args.num_workers if args.file_name else 0,
-            rollout_fragment_length=200,
+            rollout_fragment_length=int(args.horizon / 20),
         )
         .rl_module(_enable_rl_module_api=enable_rl_module)
         .training(
@@ -164,10 +164,11 @@ if __name__ == "__main__":
             lambda_=0.95,
             gamma=0.995,  # discount factor
             entropy_coeff=0.005,  # beta?
-            sgd_minibatch_size=args.horizon,  # batch_size?
-            train_batch_size=args.horizon * 2 * 10 * num_envs,  # 20480  # buffer_size?
+            sgd_minibatch_size=int(args.horizon / 10),  # batch_size?
+            train_batch_size=args.horizon * num_envs,  # 20480  # buffer_size?
             num_sgd_iter=3,  # num_epoch?
-            clip_param=0.2,  # epsilon?
+            clip_param=0.6,  # epsilon?
+            kl_target=0.1,
             model={"fcnet_hiddens": [512, 512, 512]},
             _enable_learner_api=enable_rl_module,
         )
@@ -207,7 +208,6 @@ if __name__ == "__main__":
                 ],
             ),
         )
-
     results = tuner.fit()
 
     # And check the results.

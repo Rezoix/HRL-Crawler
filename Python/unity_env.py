@@ -42,8 +42,10 @@ class BetterUnity3DEnv(MultiAgentEnv):
         no_graphics: bool = False,
         timeout_wait: int = 30,
         episode_horizon: int = 1000,
-        soft_horizon: bool = False,
+        soft_horizon: bool = True,
         timescale: int = 1.0,
+        observation_high: float = 1,  # Should be 1, but some unity examples give too high values crashing RLlib
+        separate_id_per_episode: bool = True,
     ):
         """Initializes a Unity3DEnv object.
         Args:
@@ -79,6 +81,9 @@ class BetterUnity3DEnv(MultiAgentEnv):
             EngineConfigurationChannel,
         )
 
+        self.reset_id_mappings()
+        self.separate_id_per_episode = separate_id_per_episode
+
         # Try connecting to the Unity3D game instance. If a port is blocked
         port_ = None
         while True:
@@ -106,7 +111,9 @@ class BetterUnity3DEnv(MultiAgentEnv):
                     timeout_wait=timeout_wait,
                     side_channels=[channel],
                 )
-                channel.set_configuration_parameters(time_scale=timescale)
+                channel.set_configuration_parameters(
+                    time_scale=timescale, capture_frame_rate=50, target_frame_rate=-1
+                )
                 print("Created UnityEnvironment for port {}".format(port_ + worker_id_))
             except mlagents_envs.exception.UnityWorkerInUseException:
                 pass
@@ -137,7 +144,48 @@ class BetterUnity3DEnv(MultiAgentEnv):
         self.n_agents = len(decision_steps)
         self._previous_decision_step = decision_steps
 
-        # Check action spaces (Only for continuous at the moment)
+        obs, rewards, terminated, truncated, info = self.step({})
+        self._agent_ids = list(obs.keys())
+
+        self.action_spaces = {}
+        self.observation_spaces = {}
+        for agent in self._agent_ids:
+            # converted_name = agent.replace("_0", "")
+            # For multiagent cases "_id" is appended to all agent names.
+            # Remove the extra id, as it is not included in the behavior names:
+            postfix = "team=0"
+            converted_name = agent.split(postfix)  # Could also use regex here...
+            converted_name = converted_name[0] + postfix
+            behavior_spec = self.unity_env.behavior_specs[converted_name]
+            action_spec = behavior_spec.action_spec
+            observation_spec = behavior_spec.observation_specs
+            # self.action_space[agent] =
+            high = np.inf  # TODO: Would be nice to have 1, but some unity examples have -inf to inf
+
+            if action_spec.continuous_size > 0:
+                size = action_spec.continuous_size
+                self.action_spaces[agent] = Box(
+                    -1,
+                    1,
+                    shape=(size,),
+                    dtype=np.float32,
+                )
+            if len(observation_spec) == 1:
+                shape = observation_spec[0].shape
+                self.observation_spaces[agent] = Box(-high, high, shape=shape, dtype=np.float32)
+            else:
+                boxes = []
+                for obs in observation_spec:
+                    box = Box(-high, high, shape=obs.shape, dtype=np.float32)
+                    boxes.append(box)
+                self.observation_spaces[agent] = TupleSpace(boxes)
+            # TODO: How to do this with multiple policies? Ray claims to like dicts, but does not like them in reality
+            # self.action_spaces["default_policy"] = self.action_spaces[agent]
+            # self.observation_spaces["default_policy"] = self.observation_spaces[agent]
+            self.action_space = self.action_spaces[agent]
+            self.observation_space = self.observation_spaces[agent]
+
+        """ # Check action spaces (Only for continuous at the moment)
         if self.group_spec.action_spec.is_continuous():
             self.action_size = self.group_spec.action_spec.continuous_size
             high = 1
@@ -146,7 +194,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
                 high,
                 shape=(self.n_agents, self.group_spec.action_spec.continuous_size),
                 dtype=np.float32,
-            )
+            ) """
 
         # Check observation spaces
 
@@ -160,10 +208,10 @@ class BetterUnity3DEnv(MultiAgentEnv):
         else:
             self.observation_space = list_spaces[0] """
 
-        self.obs_dim = self._get_vec_obs_size()
+        """ self.obs_dim = self._get_vec_obs_size()
         if self.obs_dim > 0:
             high = np.inf
-            self.observation_space = Box(-high, high, shape=(self.n_agents, self.obs_dim), dtype=np.float32)
+            self.observation_space = Box(-high, high, shape=(self.n_agents, self.obs_dim), dtype=np.float32) """
 
         # self.observation_space = self._get_obs_shape()
 
@@ -194,6 +242,31 @@ class BetterUnity3DEnv(MultiAgentEnv):
         ret._shape = shape
         return ret """
 
+    def reset_id_mappings(self):
+        self.ray_to_unity_mapping = {}
+        self.unity_to_ray_mapping = {}
+
+    def ray_id_to_unity(self, ray_id: int):
+        if ray_id not in self.ray_to_unity_mapping:
+            return None
+        return self.ray_to_unity_mapping[ray_id]
+
+    def unity_id_to_ray(self, unity_id: int):
+        if unity_id not in self.unity_to_ray_mapping:
+            return None
+        return self.unity_to_ray_mapping[unity_id]
+
+    def create_new_agent_id(self, unity_id: int):
+        # Maps given unity_id to a new ray_id
+        if len(self.ray_to_unity_mapping.keys()) > 0:
+            new_id = max(self.ray_to_unity_mapping.keys()) + 1
+        else:
+            new_id = 0
+        self.ray_to_unity_mapping[new_id] = unity_id
+        self.unity_to_ray_mapping[unity_id] = new_id
+        # print(f"Created ID {new_id}")
+        return new_id
+
     def step(
         self, action_dict: MultiAgentDict
     ) -> Tuple[MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict, MultiAgentDict]:
@@ -218,32 +291,27 @@ class BetterUnity3DEnv(MultiAgentEnv):
         # Set only the required actions (from the DecisionSteps) in Unity3D.
         all_agents = []
         for behavior_name in self.unity_env.behavior_specs:
-            # New ML-Agents API: Set all agents actions at the same time
-            # via an ActionTuple. Since API v1.4.0.
-            if self.api_version[0] > 1 or (self.api_version[0] == 1 and self.api_version[1] >= 4):
-                actions = []
-                for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
-                    key = behavior_name + "_{}".format(agent_id)
-                    all_agents.append(key)
-                    # print(key)
-                    # print(action_dict)
-                    if key not in action_dict:
-                        print("nokey")
-                    else:
-                        actions.append(action_dict[key])
-                if actions:
-                    if actions[0].dtype == np.float32:
-                        action_tuple = ActionTuple(continuous=np.array(actions))
-                    else:
-                        action_tuple = ActionTuple(discrete=np.array(actions))
-                    self.unity_env.set_actions(behavior_name, action_tuple)
-            # Old behavior: Do not use an ActionTuple and set each agent's
-            # action individually.
-            else:
-                for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id_to_index.keys():
-                    key = behavior_name + "_{}".format(agent_id)
-                    all_agents.append(key)
-                    self.unity_env.set_action_for_agent(behavior_name, agent_id, action_dict[key])
+            # Note: The following only supports API v1.4.0 or higher (set all actions at once).
+            actions = []
+            for agent_id in self.unity_env.get_steps(behavior_name)[0].agent_id:
+                if self.separate_id_per_episode:
+                    ray_id = self.unity_id_to_ray(agent_id)
+                    if ray_id is None:
+                        print("No ray ID for this agent?")
+                else:
+                    ray_id = agent_id
+                key = behavior_name + "_{}".format(ray_id)
+                all_agents.append(key)
+                if key not in action_dict:
+                    print("nokey")
+                else:
+                    actions.append(action_dict[key])
+            if actions:
+                if actions[0].dtype == np.float32:
+                    action_tuple = ActionTuple(continuous=np.array(actions))
+                else:
+                    action_tuple = ActionTuple(discrete=np.array(actions))
+                self.unity_env.set_actions(behavior_name, action_tuple)
         # Do the step.
         self.unity_env.step()
 
@@ -266,6 +334,7 @@ class BetterUnity3DEnv(MultiAgentEnv):
     def reset(self, *, seed=None, options=None) -> Tuple[MultiAgentDict, MultiAgentDict]:
         """Resets the entire Unity3D scene (a single multi-agent episode)."""
         self.episode_timesteps = 0
+        self.reset_id_mappings()
         if not self.soft_horizon:
             self.unity_env.reset()
         obs, _, _, _, infos = self._get_step_results()
@@ -296,19 +365,19 @@ class BetterUnity3DEnv(MultiAgentEnv):
             # Loop through all envs ("agents") and fill in, whatever
             # information we have.
             # print(decision_steps.agent_id_to_index.items())
-            for agent_id, idx in decision_steps.agent_id_to_index.items():
-                key = behavior_name + "_{}".format(agent_id)
-                terminateds[key] = False
-                os = tuple(o[idx] for o in decision_steps.obs)
-                os = os[0] if len(os) == 1 else os
-                obs[key] = os
-                rewards[key] = decision_steps.reward[idx] + decision_steps.group_reward[idx]
-                # print(f"{key}, {rewards[key]}, {decision_steps.group_reward[idx]}")
-                # print(i)
-                i += 1
             for agent_id, idx in terminal_steps.agent_id_to_index.items():
-                key = behavior_name + "_{}".format(agent_id)
-                terminateds[key] = True
+                if self.separate_id_per_episode:
+                    ray_id = self.unity_id_to_ray(agent_id)  # Use old ID to store final obs and reward
+                    self.create_new_agent_id(agent_id)  # Create new ID for the next episode for this agent
+                else:
+                    ray_id = agent_id
+                key = behavior_name + "_{}".format(ray_id)
+                if self.separate_id_per_episode:
+                    terminateds[
+                        key
+                    ] = True  # Can only set true, if agent changes ID afterwards (ray limitation)
+                else:
+                    terminateds[key] = False
                 # Only overwrite rewards (last reward in episode), b/c obs
                 # here is the last obs (which doesn't matter anyways).
                 # Unless key does not exist in obs.
@@ -317,15 +386,37 @@ class BetterUnity3DEnv(MultiAgentEnv):
                     obs[key] = os = os[0] if len(os) == 1 else os
                 rewards[key] = terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
 
+            for agent_id, idx in decision_steps.agent_id_to_index.items():
+                if self.separate_id_per_episode:
+                    ray_id = self.unity_id_to_ray(agent_id)
+                    if ray_id is None:
+                        ray_id = self.create_new_agent_id(agent_id)
+                else:
+                    ray_id = agent_id
+                key = behavior_name + "_{}".format(ray_id)
+                terminateds[key] = False
+                os = tuple(o[idx] for o in decision_steps.obs)
+                os = os[0] if len(os) == 1 else os
+                obs[key] = os
+                rewards[key] = decision_steps.reward[idx] + decision_steps.group_reward[idx]
+                # print(f"{key}, {rewards[key]}, {decision_steps.group_reward[idx]}")
+                # print(i)
+                i += 1
+
         # Only use dones if all agents are done, then we should do a reset.
-        if False not in terminateds.values() and len(terminateds) > 0:
+        if False not in terminateds.values() and len(terminateds) == len(self.unity_to_ray_mapping):
+            # Only return terminated all, if all agents are done on the same step
+            # (In unity multi-agent envs this rarely happens, unless there is only one agent)
             terminateds["__all__"] = True
+            # TODO: How to report that only one agent is done? RLlib seems to crash in this simple situation
         else:
             terminateds["__all__"] = False
-            # TODO: How to report that only one agent is done? RLlib seems to crash in this simple situation
-        
-        #return obs, rewards, {"__all__": False}, {"__all__": False}, infos
+        # return obs, rewards, {"__all__": False}, {"__all__": False}, infos
         return obs, rewards, terminateds, {"__all__": False}, infos
+
+    def close(self):
+        print("Closing unity env")
+        self.unity_env.close()
 
     def get_policy() -> Tuple[dict, Callable[[AgentID], PolicyID]]:
         # policy = PolicySpec(observation_space=self.observation_space, action_space=self.action_space)
@@ -380,7 +471,7 @@ class HRLUnityEnv(BetterUnity3DEnv):
 
     def reset(self, *, seed=None, options=None) -> Tuple[MultiAgentDict, MultiAgentDict]:
         self.episode_timesteps = 0
-
+        # goal_vector_length
         self.current_goal = {id: np.zeros((10,), dtype=np.float32) for id in self._agent_ids}
         self.steps_remaining_at_level = {id: None for id in self._agent_ids}
         self.num_high_level_steps = {id: 0 for id in self._agent_ids}
@@ -391,7 +482,7 @@ class HRLUnityEnv(BetterUnity3DEnv):
             self.unity_env.reset()
         _, _, _, _, infos = self._get_step_results()
 
-        obs = {f"high_level_{id}": self.cur_obs[id] for id in self._agent_ids}
+        obs = {f"high_level_{id}": self.cur_obs[id] for id in self._agent_ids if self.cur_obs[id] is not None}
 
         # print("Reset Done")
 
