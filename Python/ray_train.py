@@ -24,7 +24,7 @@ parser.add_argument("--restore", type=str, default=None, help="Filepath to check
 parser.add_argument(
     "--file-name",
     type=str,
-    default="..\\build\\Crawler.exe",
+    default="/home/saku/HRL-Crawler/Crawler/build/Crawler.x86_64",
     help="The Unity3d binary (compiled) game filepath.",
 )
 
@@ -60,9 +60,9 @@ parser.add_argument("--gpus", type=int, default=1, help="How many GPUs should be
 if __name__ == "__main__":
     args = parser.parse_args()
 
-    ray.init(num_gpus=args.gpus)  # , local_mode=True)
+    ray.init(num_gpus=args.gpus)#, local_mode=True)
 
-    timescale = 4
+    timescale = 20
 
     use_hrl = False
 
@@ -156,19 +156,23 @@ if __name__ == "__main__":
         .framework("torch")
         .rollouts(
             num_rollout_workers=args.num_workers if args.file_name else 0,
-            rollout_fragment_length=int(args.horizon / 20),
+            rollout_fragment_length=int(args.horizon / 10),
+            recreate_failed_workers=True,
         )
         .rl_module(_enable_rl_module_api=enable_rl_module)
         .training(
-            lr=0.0003,
+            lr=0.0001,#[[0, 0.0003], [1_000_000 * 10 * 2, 0.0]], # env_steps * n_agents * (num_envs/2)
+            lr_schedule=[[0, 0.0001], [300, 0.0]],
             lambda_=0.95,
             gamma=0.995,  # discount factor
-            entropy_coeff=0.005,  # beta?
-            sgd_minibatch_size=int(args.horizon / 10),  # batch_size?
+            entropy_coeff=[[0, 0.005], [1_000_000 * 10 * 2, 0.0]],#tune.grid_search([0.001, 0.0]),  # beta?
+            sgd_minibatch_size=args.horizon * num_envs,  # batch_size?
             train_batch_size=args.horizon * num_envs,  # 20480  # buffer_size?
             num_sgd_iter=3,  # num_epoch?
-            clip_param=0.6,  # epsilon?
-            kl_target=0.1,
+            clip_param=0.3,  # epsilon?
+            kl_target=0.0,
+            kl_coeff=0.0,
+            use_kl_loss=True, #Must be True, use kl_coeff set to 0 to disable
             model={"fcnet_hiddens": [512, 512, 512]},
             _enable_learner_api=enable_rl_module,
         )
@@ -177,9 +181,11 @@ if __name__ == "__main__":
         )  # Preferably use "env_steps" with HRL, because there are two different levels of policies, which messes up agent step count?
         .resources(
             num_gpus=args.gpus,
-            num_gpus_per_worker=1 / (args.num_workers if args.num_workers > 0 else 1),
+            num_learner_workers = 1,
+            num_gpus_per_learner_worker = 1,
         )
     )
+
 
     stop = {
         "training_iteration": args.stop_iters,
@@ -189,6 +195,7 @@ if __name__ == "__main__":
 
     if args.restore:
         tuner = tune.Tuner.restore(args.restore)
+
     else:
         tuner = tune.Tuner(
             "PPO",
