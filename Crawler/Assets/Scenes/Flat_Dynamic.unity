@@ -179,6 +179,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_platform (9)
       objectReference: {fileID: 0}
+    - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -242,6 +246,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 6209757054086476432, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_Model
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 6209757054086476435, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
       propertyPath: m_LocalPosition.y
       value: 2.5
@@ -351,6 +359,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_platform (8)
       objectReference: {fileID: 0}
+    - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -411,6 +423,10 @@ PrefabInstance:
     - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
       propertyPath: m_Name
       value: Flat_platform (2)
+      objectReference: {fileID: 0}
+    - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -473,6 +489,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_platform (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -534,6 +554,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_platform (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -594,6 +618,10 @@ PrefabInstance:
     - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
       propertyPath: m_Name
       value: Flat_platform (7)
+      objectReference: {fileID: 0}
+    - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -763,6 +791,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_platform (6)
       objectReference: {fileID: 0}
+    - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -824,6 +856,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Flat_platform (5)
       objectReference: {fileID: 0}
+    - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -884,6 +920,10 @@ PrefabInstance:
     - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
       propertyPath: m_Name
       value: Flat_platform (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 6813981368972186340, guid: 3a09f1acd457edc10b49e42c2388820e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

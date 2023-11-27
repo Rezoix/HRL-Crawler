@@ -130,23 +130,10 @@ class BetterUnity3DEnv(MultiAgentEnv):
         # Keep track of how many times we have called `step` so far.
         self.episode_timesteps = 0
 
-        # Get env info
-        if not self.unity_env.behavior_specs:
-            self.unity_env.step()
-
-        self.name = list(self.unity_env.behavior_specs.keys())[0]
-        self.group_spec = self.unity_env.behavior_specs[self.name]
-
-        # Check for num of agents
-        self.unity_env.reset()
-        decision_steps, _ = self.unity_env.get_steps(self.name)
-        print(f"{len(decision_steps)} agents found in the environment")
-        self.n_agents = len(decision_steps)
-        self._previous_decision_step = decision_steps
-
+        # First step is always empty, so lets run it already in here to not mess up Ray Rllib
         obs, rewards, terminated, truncated, info = self.step({})
         self._agent_ids = list(obs.keys())
-
+        # self._agent_ids = list(self.unity_env.behavior_specs.keys())
         self.action_spaces = {}
         self.observation_spaces = {}
         for agent in self._agent_ids:

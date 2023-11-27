@@ -165,13 +165,13 @@ if __name__ == "__main__":
             lr_schedule=[[0, 0.0001], [300, 0.0]],
             lambda_=0.95,
             gamma=0.995,  # discount factor
-            entropy_coeff=[[0, 0.005], [1_000_000 * 10 * 2, 0.0]],#tune.grid_search([0.001, 0.0]),  # beta?
+            entropy_coeff=[[0, 0.0002], [1_000_000 * 10 * 2, 0.0]],#tune.grid_search([0.001, 0.0]),  # beta?
             sgd_minibatch_size=args.horizon * num_envs,  # batch_size?
             train_batch_size=args.horizon * num_envs,  # 20480  # buffer_size?
             num_sgd_iter=3,  # num_epoch?
             clip_param=0.3,  # epsilon?
-            kl_target=0.0,
-            kl_coeff=0.0,
+            kl_target=0.01,
+            kl_coeff=0.2,
             use_kl_loss=True, #Must be True, use kl_coeff set to 0 to disable
             model={"fcnet_hiddens": [512, 512, 512]},
             _enable_learner_api=enable_rl_module,

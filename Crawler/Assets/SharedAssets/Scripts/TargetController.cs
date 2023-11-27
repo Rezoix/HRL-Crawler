@@ -2,6 +2,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using Unity.MLAgents;
 using UnityEngine.Events;
+using Unity.VisualScripting;
 
 namespace Unity.MLAgentsExamples
 {
@@ -88,6 +89,11 @@ namespace Unity.MLAgentsExamples
                 if (respawnIfTouched)
                 {
                     MoveTargetToRandomPosition();
+                }
+                var agent = col.gameObject.GetComponentInParent<CrawlerAgent>();
+                if (agent)
+                {
+                    agent.TouchedTarget();
                 }
             }
         }
