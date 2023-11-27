@@ -23,9 +23,9 @@ public class CrawlerAgent : Agent
         "whereas the CrawlerDynamic & CrawlerStatic agents will run at the speed specified during training "
     )]
     //The walking speed to try and achieve
-    private float m_TargetWalkingSpeed = m_maxWalkingSpeed / 2;
+    private float m_TargetWalkingSpeed = m_maxWalkingSpeed;
 
-    const float m_maxWalkingSpeed = 15; //The max walking speed
+    const float m_maxWalkingSpeed = 20; //The max walking speed
 
     //The current target walking speed. Clamped because a value of zero will cause NaNs
     public float TargetWalkingSpeed
@@ -125,10 +125,6 @@ public class CrawlerAgent : Agent
         m_JdController.SetupBodyPart(leg2Lower);
         m_JdController.SetupBodyPart(leg3Upper);
         m_JdController.SetupBodyPart(leg3Lower);
-
-        //Initial distance to target
-        m_initDistanceToTarget = (body.position - m_Target.position).magnitude;
-        m_lastDistanceToTarget = m_initDistanceToTarget;
     }
 
     /// <summary>
@@ -139,6 +135,9 @@ public class CrawlerAgent : Agent
     void SpawnTarget(Transform prefab, Vector3 pos)
     {
         m_Target = Instantiate(prefab, pos, Quaternion.identity, transform.parent);
+
+        m_initDistanceToTarget = (body.position - m_Target.position).magnitude;
+        m_lastDistanceToTarget = m_initDistanceToTarget;
     }
 
     /// <summary>
@@ -157,11 +156,7 @@ public class CrawlerAgent : Agent
         UpdateOrientationObjects();
 
         //Set our goal walking speed
-        TargetWalkingSpeed = m_maxWalkingSpeed / 2;//Random.Range(0.1f, m_maxWalkingSpeed);
-
-        //Initial distance to target
-        m_initDistanceToTarget = (body.position - m_Target.position).magnitude;
-        m_lastDistanceToTarget = m_initDistanceToTarget;
+        TargetWalkingSpeed = 20.0f;//Random.Range(0.1f, m_maxWalkingSpeed);
     }
 
     void OnDrawGizmos()
@@ -392,7 +387,15 @@ public class CrawlerAgent : Agent
 
         //Add reward for looking in the right direction. Requires movement so that the agent does not simply stand still 
         // Might have problem if the agent learns to look away, walk away from target and then walk in right direction? Maybe penalize more if moving backwards?
-        //AddReward(lookAtTargetReward * deltaDistanceNorm * 0.5f);
+        /*if (deltaDistance < 0)
+        {
+            AddReward(deltaDistanceNorm);
+        }
+        else
+        {
+            AddReward(lookAtTargetReward * deltaDistanceNorm);
+        }*/
+        
 
 
         // Velocity of agent multiplied by cos of angle between target and velocity
@@ -400,6 +403,9 @@ public class CrawlerAgent : Agent
         // Divide by 15 to scale the reward to a more appropriate value
         //var velReward = Vector3.Dot(cubeForward, GetAvgVelocity()) / 15.0f;
         //AddReward(velReward);
+
+        //var velReward = GetAvgVelocity().magnitude / 50.0f;
+        //AddReward(velReward * lookAtTargetReward);
 
 
 
@@ -463,6 +469,8 @@ public class CrawlerAgent : Agent
     /// </summary>
     public void TouchedTarget()
     {
-        AddReward(1f);
+        m_initDistanceToTarget = (body.position - m_Target.position).magnitude;
+        m_lastDistanceToTarget = m_initDistanceToTarget;
+        //AddReward(1f);
     }
 }

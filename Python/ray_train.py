@@ -20,11 +20,16 @@ from hiro import HIROHigh, HIROLow
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--model-path", type=str, default=".\\models\\")
-parser.add_argument("--restore", type=str, default=None, help="Filepath to checkpoint to restore training.")
+parser.add_argument(
+    "--restore",
+    type=str,
+    default=None,
+    help="Filepath to checkpoint to restore training.",
+)
 parser.add_argument(
     "--file-name",
     type=str,
-    default="..\\build\\Crawler.exe",
+    default="/home/saku/HRL-Crawler/Crawler/build/Crawler.x86_64",
     help="The Unity3d binary (compiled) game filepath.",
 )
 
@@ -36,7 +41,9 @@ parser.add_argument(
     help="Whether this script should be run as a test: --stop-reward must "
     "be achieved within --stop-timesteps AND --stop-iters.",
 )
-parser.add_argument("--stop-iters", type=int, default=9999, help="Number of iterations to train.")
+parser.add_argument(
+    "--stop-iters", type=int, default=9999, help="Number of iterations to train."
+)
 parser.add_argument(
     "--stop-timesteps",
     type=int,
@@ -63,7 +70,7 @@ if __name__ == "__main__":
 
     ray.init(num_gpus=args.gpus)  # , local_mode=True)
 
-    timescale = 4
+    timescale = 20
 
     use_hrl = False
 
@@ -119,7 +126,10 @@ if __name__ == "__main__":
                 config={
                     "model": {
                         "custom_model": "HIROLow",
-                        "custom_model_config": {"fc_size": 512, "goal_size": goal_vector_length},
+                        "custom_model_config": {
+                            "fc_size": 512,
+                            "goal_size": goal_vector_length,
+                        },
                     }
                 },
             ),
@@ -157,29 +167,38 @@ if __name__ == "__main__":
         .framework("torch")
         .rollouts(
             num_rollout_workers=args.num_workers if args.file_name else 0,
-            num_envs_per_worker=int(args.num_envs / args.num_workers),
             rollout_fragment_length=int(args.horizon / 10),
+            recreate_failed_workers=True,
         )
         .rl_module(_enable_rl_module_api=enable_rl_module)
         .training(
-            lr=0.0003,
+            lr=0.0001,  # [[0, 0.0003], [1_000_000 * 10 * 2, 0.0]], # env_steps * n_agents * (num_envs/2)
+            lr_schedule=[[0, 0.0001], [300, 0.0]],
             lambda_=0.95,
             gamma=0.995,  # discount factor
-            entropy_coeff=0.005,  # beta?
-            sgd_minibatch_size=int(args.horizon / 10),  # batch_size?
-            train_batch_size=args.horizon * args.num_envs,  # 20480  # buffer_size?
+            entropy_coeff=[
+                [0, 0.0002],
+                [1_000_000 * 10 * 2, 0.0],
+            ],  # tune.grid_search([0.001, 0.0]),  # beta?
+            sgd_minibatch_size=args.horizon * num_envs,  # batch_size?
+            train_batch_size=args.horizon * num_envs,  # 20480  # buffer_size?
             num_sgd_iter=3,  # num_epoch?
-            clip_param=0.6,  # epsilon?
-            kl_target=0.1,
+            clip_param=0.3,  # epsilon?
+            kl_target=0.01,
+            kl_coeff=0.2,
+            use_kl_loss=True,  # Must be True, use kl_coeff set to 0 to disable
             model={"fcnet_hiddens": [512, 512, 512]},
             _enable_learner_api=enable_rl_module,
         )
         .multi_agent(
-            policies=policies, policy_mapping_fn=policy_mapping_fn, count_steps_by="env_steps"
+            policies=policies,
+            policy_mapping_fn=policy_mapping_fn,
+            count_steps_by="env_steps",
         )  # Preferably use "env_steps" with HRL, because there are two different levels of policies, which messes up agent step count?
         .resources(
             num_gpus=args.gpus,
-            num_gpus_per_worker=1 / (args.num_workers if args.num_workers > 0 else 1),
+            num_learner_workers=1,
+            num_gpus_per_learner_worker=1,
         )
     )
 
@@ -191,6 +210,7 @@ if __name__ == "__main__":
 
     if args.restore:
         tuner = tune.Tuner.restore(args.restore)
+
     else:
         tuner = tune.Tuner(
             "PPO",

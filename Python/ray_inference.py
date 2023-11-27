@@ -17,12 +17,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--checkpoint",
     type=str,
-    default="C:\\Users\\Saku\\ray_results\\PPO_2023-11-20_13-03-28\\PPO_unity3d_6f147_00000_0_2023-11-20_13-03-28\\checkpoint_000053",
+    default="/home/saku/ray_results/PPO_2023-11-27_10-58-23/PPO_unity3d_1ec09_00000_0_2023-11-27_10-58-23/checkpoint_000055",
 )
 parser.add_argument(
     "--file-name",
     type=str,
-    default="..\\build\\Crawler.exe",
+    default="/home/saku/HRL-Crawler/Crawler/build/Crawler.x86_64",
     help="The Unity3d binary (compiled) game filepath.",
 )
 parser.add_argument(
