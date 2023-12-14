@@ -3163,7 +3163,7 @@ MonoBehaviour:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
   MaxStep: 5000
-  m_TargetWalkingSpeed: 15
+  m_TargetWalkingSpeed: 20
   m_raySensors: 10
   m_rayDistance: 0.75
   m_layerMaskDown:
@@ -3221,6 +3221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DecisionPeriod: 5
+  DecisionStep: 0
   TakeActionsBetweenDecisions: 0
 --- !u!114 &4845971001715176660
 MonoBehaviour:

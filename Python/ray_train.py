@@ -13,7 +13,7 @@ from ray.rllib.models import ModelCatalog
 
 from ray.air.integrations.wandb import WandbLoggerCallback
 
-from unity_env import BetterUnity3DEnv, HRLUnityEnv
+
 from export import SaveCheckpointCallback
 from hiro import HIROHigh, HIROLow
 
@@ -29,21 +29,18 @@ parser.add_argument(
 parser.add_argument(
     "--file-name",
     type=str,
-    default="/home/saku/HRL-Crawler/Crawler/build/Crawler.x86_64",
+    default="C:\\Users\\Saku\\Documents\\Dippa\\Crawler\\build\\Crawler.exe",
     help="The Unity3d binary (compiled) game filepath.",
 )
 
-parser.add_argument("--num-workers", type=int, default=1)
-parser.add_argument("--num-envs", type=int, default=4)
+parser.add_argument("--num-workers", type=int, default=4)
 parser.add_argument(
     "--as-test",
     action="store_true",
     help="Whether this script should be run as a test: --stop-reward must "
     "be achieved within --stop-timesteps AND --stop-iters.",
 )
-parser.add_argument(
-    "--stop-iters", type=int, default=9999, help="Number of iterations to train."
-)
+parser.add_argument("--stop-iters", type=int, default=9999, help="Number of iterations to train.")
 parser.add_argument(
     "--stop-timesteps",
     type=int,
@@ -72,9 +69,11 @@ if __name__ == "__main__":
 
     timescale = 20
 
-    use_hrl = False
+    use_hrl = True
 
     if use_hrl:
+        from unity_env_old import BetterUnity3DEnv, HRLUnityEnv
+
         ModelCatalog.register_custom_model("HIROHigh", HIROHigh)
         ModelCatalog.register_custom_model("HIROLow", HIROLow)
 
@@ -100,12 +99,7 @@ if __name__ == "__main__":
 
         policies = {
             "policy_high": PolicySpec(
-                observation_space=TupleSpace(
-                    [
-                        Box(-np.inf, np.inf, (126,)),
-                        Box(-np.inf, np.inf, (51,)),
-                    ]
-                ),
+                observation_space=Box(-np.inf, np.inf, (51,)),
                 action_space=goal_vector_space,  # Goal vector
                 config={
                     "model": {
@@ -118,7 +112,6 @@ if __name__ == "__main__":
                 observation_space=TupleSpace(
                     [
                         Box(-np.inf, np.inf, (126,)),
-                        Box(-np.inf, np.inf, (51,)),
                         goal_vector_space,  # Goal vector
                     ]
                 ),
@@ -126,16 +119,15 @@ if __name__ == "__main__":
                 config={
                     "model": {
                         "custom_model": "HIROLow",
-                        "custom_model_config": {
-                            "fc_size": 512,
-                            "goal_size": goal_vector_length,
-                        },
+                        "custom_model_config": {"fc_size": 512, "goal_size": goal_vector_length},
                     }
                 },
             ),
         }
 
     else:  # Normal training without HRL
+        from unity_env import BetterUnity3DEnv, HRLUnityEnv
+
         tune.register_env(
             "unity3d",
             lambda c: BetterUnity3DEnv(
@@ -152,7 +144,7 @@ if __name__ == "__main__":
 
     enable_rl_module = True
 
-    # num_envs = 4  # args.num_workers if args.file_name else 1
+    num_envs = args.num_workers if args.file_name else 1
 
     config = (
         PPOConfig()
@@ -173,7 +165,6 @@ if __name__ == "__main__":
         .rl_module(_enable_rl_module_api=enable_rl_module)
         .training(
             lr=0.0001,  # [[0, 0.0003], [1_000_000 * 10 * 2, 0.0]], # env_steps * n_agents * (num_envs/2)
-            lr_schedule=[[0, 0.0001], [300, 0.0]],
             lambda_=0.95,
             gamma=0.995,  # discount factor
             entropy_coeff=[
@@ -187,17 +178,15 @@ if __name__ == "__main__":
             kl_target=0.01,
             kl_coeff=0.2,
             use_kl_loss=True,  # Must be True, use kl_coeff set to 0 to disable
-            model={"fcnet_hiddens": [512, 512, 512]},
+            model={"fcnet_hiddens": [512, 512, 512], "fcnet_activation": "tanh"},
             _enable_learner_api=enable_rl_module,
         )
         .multi_agent(
-            policies=policies,
-            policy_mapping_fn=policy_mapping_fn,
-            count_steps_by="env_steps",
+            policies=policies, policy_mapping_fn=policy_mapping_fn, count_steps_by="env_steps"
         )  # Preferably use "env_steps" with HRL, because there are two different levels of policies, which messes up agent step count?
         .resources(
             num_gpus=args.gpus,
-            num_learner_workers=1,
+            num_learner_workers=0,
             num_gpus_per_learner_worker=1,
         )
     )
@@ -225,7 +214,7 @@ if __name__ == "__main__":
                 callbacks=[
                     WandbLoggerCallback(
                         project="HRL-Crawler",
-                        group="No HRL, flat dynamic",
+                        group="HRL, flat dynamic",
                     )
                 ],
             ),
