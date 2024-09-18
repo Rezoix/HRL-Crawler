@@ -2,6 +2,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 using Unity.MLAgents;
 using UnityEngine.Events;
+using Unity.VisualScripting;
 
 namespace Unity.MLAgentsExamples
 {
@@ -19,6 +20,7 @@ namespace Unity.MLAgentsExamples
         [Header("Target Placement")]
         public float spawnRadius; //The radius in which a target can be randomly spawned.
         public bool respawnIfTouched; //Should the target respawn to a different position when touched
+        public int randomSeed = -1;
 
         [Header("Target Fell Protection")]
         public bool respawnIfFallsOffPlatform = true; //If the target falls off the platform, reset the position.
@@ -51,6 +53,11 @@ namespace Unity.MLAgentsExamples
         // Start is called before the first frame update
         void OnEnable()
         {
+            if (randomSeed != -1)
+            {
+                Random.InitState(randomSeed);
+            }
+
             m_startingPos = transform.position;
             if (respawnIfTouched)
             {
@@ -88,6 +95,11 @@ namespace Unity.MLAgentsExamples
                 if (respawnIfTouched)
                 {
                     MoveTargetToRandomPosition();
+                }
+                var agent = col.gameObject.GetComponentInParent<CrawlerAgent>();
+                if (agent)
+                {
+                    agent.TouchedTarget();
                 }
             }
         }

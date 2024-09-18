@@ -75,3 +75,6 @@ Keskeneräisellä HRL toteutuksella agentti oppi kävelemään jossain määrin 
 Koulutusta tarkkailtaessa useampaan otteeseen agentti onnistui tekemään voltin, ja muutenkin hyppäämään. Erittäin mielenkiintoista onnistuisiko tuollaisten liikkeiden eristäminen "skilleiksi".
 Huomattavaa myös, että agentin reward on vielä ainakin kyseenalainen?
 
+#### 14.11 ####
+Jostain syystä Unity palauttaa agentille decisionstep ja terminalstep samassa observaatiossa. Epäkäytännöllistä että toimii näin. 
+RL kirjaston pitäisi silloin ymmärtää että episodi terminoitui mutta halutaan kuitenkin actioneita, jota rllib ei osaa?

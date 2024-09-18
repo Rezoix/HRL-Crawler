@@ -3,12 +3,29 @@ using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgentsExamples;
 using Unity.MLAgents.Sensors;
+using Handles = UnityEditor.Handles;
 using Random = UnityEngine.Random;
 using System;
 
 [RequireComponent(typeof(JointDriveController))] // Required to set joint forces
 public class CrawlerAgent : Agent
 {
+
+    [Header("Metrics")]
+    public bool endEPOnGoal = false;
+    public MetricsLogger metricsLogger;
+
+    //Metrics
+    int m_stepsToTarget;
+
+    //Multi-target metrics
+    int m_targetsCollected;
+    float m_totalSteps;
+    float m_speedSum;
+    float m_successRateSum;
+    int m_episode;
+
+
 
     [Header("Walk Speed")]
     [Range(0.1f, m_maxWalkingSpeed)]
@@ -23,9 +40,9 @@ public class CrawlerAgent : Agent
         "whereas the CrawlerDynamic & CrawlerStatic agents will run at the speed specified during training "
     )]
     //The walking speed to try and achieve
-    private float m_TargetWalkingSpeed = m_maxWalkingSpeed / 2;
+    private float m_TargetWalkingSpeed = m_maxWalkingSpeed;
 
-    const float m_maxWalkingSpeed = 15; //The max walking speed
+    const float m_maxWalkingSpeed = 20; //The max walking speed
 
     //The current target walking speed. Clamped because a value of zero will cause NaNs
     public float TargetWalkingSpeed
@@ -60,6 +77,7 @@ public class CrawlerAgent : Agent
 
     float m_initDistanceToTarget;
     float m_lastDistanceToTarget;
+
 
 
     //The direction an agent will walk during training.
@@ -126,9 +144,9 @@ public class CrawlerAgent : Agent
         m_JdController.SetupBodyPart(leg3Upper);
         m_JdController.SetupBodyPart(leg3Lower);
 
-        //Initial distance to target
-        m_initDistanceToTarget = (body.position - m_Target.position).magnitude;
-        m_lastDistanceToTarget = m_initDistanceToTarget;
+
+        m_stepsToTarget = 0;
+        m_episode = 0;
     }
 
     /// <summary>
@@ -146,6 +164,15 @@ public class CrawlerAgent : Agent
     /// </summary>
     public override void OnEpisodeBegin()
     {
+        //Workaround for logging metrics at the end of episode due to lack of event for episode ending (e.g. OnEpisodeEnd()).
+        //Will miss the last episode of training unfortunately.
+        if (m_episode != 0)
+        {
+            LogMetrics();
+        }
+        m_episode += 1;
+
+
         foreach (var bodyPart in m_JdController.bodyPartsDict.Values)
         {
             bodyPart.Reset(bodyPart);
@@ -157,11 +184,16 @@ public class CrawlerAgent : Agent
         UpdateOrientationObjects();
 
         //Set our goal walking speed
-        TargetWalkingSpeed = m_maxWalkingSpeed / 2;//Random.Range(0.1f, m_maxWalkingSpeed);
+        TargetWalkingSpeed = 20.0f;//Random.Range(0.1f, m_maxWalkingSpeed);
 
-        //Initial distance to target
         m_initDistanceToTarget = (body.position - m_Target.position).magnitude;
         m_lastDistanceToTarget = m_initDistanceToTarget;
+
+        m_stepsToTarget = 0;
+        m_targetsCollected = 0;
+        m_totalSteps = 0;
+        m_speedSum = 0;
+        m_successRateSum = 0;
     }
 
     void OnDrawGizmos()
@@ -181,13 +213,13 @@ public class CrawlerAgent : Agent
                     origin.y = m_rayMaxLength;
                     if (Physics.Raycast(origin + offset, Vector3.down, out hit, Mathf.Infinity, m_layerMaskDown))
                     {
-                        Gizmos.color = Color.red;
-                        Gizmos.DrawRay(origin + offset, Vector3.down * hit.distance);
+                        Handles.color = Color.red;
+                        Handles.DrawLine(origin + offset, origin + offset + Vector3.down * hit.distance, 3);
                     }
                     else
                     {
-                        Gizmos.color = Color.white;
-                        Gizmos.DrawRay(origin + offset, Vector3.down * 10);
+                        Handles.color = Color.white;
+                        Handles.DrawLine(origin + offset, origin + offset + Vector3.down * 10, 3);
                     }
                 }
 
@@ -197,13 +229,13 @@ public class CrawlerAgent : Agent
                     origin.y = 0f;
                     if (Physics.Raycast(origin + offset, Vector3.up, out hit, Mathf.Infinity, m_layerMaskUp))
                     {
-                        Gizmos.color = Color.red;
-                        Gizmos.DrawRay(origin + offset, Vector3.up * hit.distance);
+                        Handles.color = Color.red;
+                        Handles.DrawLine(origin + offset, origin + offset + Vector3.up * hit.distance, 3);
                     }
                     else
                     {
-                        Gizmos.color = Color.white;
-                        Gizmos.DrawRay(origin + offset, Vector3.up * 10);
+                        Handles.color = Color.white;
+                        Handles.DrawLine(origin + offset, origin + offset + Vector3.up * 10, 3);
                     }
                 }
             }
@@ -310,8 +342,29 @@ public class CrawlerAgent : Agent
 
         var continuousActions = actionBuffers.ContinuousActions;
         var i = -1;
+
         // Pick a new target joint rotation
-        bpDict[leg0Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
+        bpDict[leg0Upper].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0);
+        bpDict[leg1Upper].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0);
+        bpDict[leg2Upper].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0);
+        bpDict[leg3Upper].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0);
+        bpDict[leg0Lower].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0, 0);
+        bpDict[leg1Lower].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0, 0);
+        bpDict[leg2Lower].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0, 0);
+        bpDict[leg3Lower].SetJointTargetRotation(Math.Clamp(continuousActions[++i], -1.0f, 1.0f), 0, 0);
+
+        // Update joint strength
+        bpDict[leg0Upper].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg1Upper].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg2Upper].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg3Upper].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg0Lower].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg1Lower].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg2Lower].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+        bpDict[leg3Lower].SetJointStrength(Math.Clamp(continuousActions[++i], -1.0f, 1.0f));
+
+
+        /* bpDict[leg0Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[leg1Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[leg2Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
         bpDict[leg3Upper].SetJointTargetRotation(continuousActions[++i], continuousActions[++i], 0);
@@ -328,7 +381,9 @@ public class CrawlerAgent : Agent
         bpDict[leg0Lower].SetJointStrength(continuousActions[++i]);
         bpDict[leg1Lower].SetJointStrength(continuousActions[++i]);
         bpDict[leg2Lower].SetJointStrength(continuousActions[++i]);
-        bpDict[leg3Lower].SetJointStrength(continuousActions[++i]);
+        bpDict[leg3Lower].SetJointStrength(continuousActions[++i]); */
+
+
     }
 
     void FixedUpdate()
@@ -371,22 +426,33 @@ public class CrawlerAgent : Agent
 
         //Add reward for looking in the right direction. Requires movement so that the agent does not simply stand still 
         // Might have problem if the agent learns to look away, walk away from target and then walk in right direction? Maybe penalize more if moving backwards?
-        //AddReward(lookAtTargetReward * deltaDistanceNorm * 0.5f);
+        /*if (deltaDistance < 0)
+        {
+            AddReward(deltaDistanceNorm);
+        }
+        else
+        {
+            AddReward(lookAtTargetReward * deltaDistanceNorm);
+        }*/
+
 
 
         // Velocity of agent multiplied by cos of angle between target and velocity
         // i.e. reward 0 for moving 90 degrees from the target vector, -1*velocity for moving directly away and 1*velocity for moving towards target
-        var velReward = Vector3.Dot(cubeForward, GetAvgVelocity());
-        AddReward(velReward);
+        // Divide by 15 to scale the reward to a more appropriate value
+        //var velReward = Vector3.Dot(cubeForward, GetAvgVelocity()) / 15.0f;
+        //AddReward(velReward);
+
+        //var velReward = GetAvgVelocity().magnitude / 50.0f;
+        //AddReward(velReward * lookAtTargetReward);
 
 
 
         // Original agent reward
-        //var matchSpeedReward = GetMatchingVelocityReward(cubeForward * TargetWalkingSpeed, GetAvgVelocity());
-        //AddReward(matchSpeedReward * lookAtTargetReward);
+        var matchSpeedReward = GetMatchingVelocityReward(cubeForward * TargetWalkingSpeed, GetAvgVelocity());
+        AddReward(matchSpeedReward * lookAtTargetReward);
 
-
-
+        m_stepsToTarget += 1;
     }
 
     /// <summary>
@@ -441,6 +507,63 @@ public class CrawlerAgent : Agent
     /// </summary>
     public void TouchedTarget()
     {
-        AddReward(1f);
+        if (!endEPOnGoal)
+        {
+            AddMetrics();
+        }
+
+
+        m_initDistanceToTarget = (body.position - m_Target.position).magnitude;
+        m_lastDistanceToTarget = m_initDistanceToTarget;
+
+        //AddReward(1f);
+
+        if (endEPOnGoal)
+        {
+            EndEpisode();
+        }
+
+    }
+
+    /// <summary>
+    /// In case of episode not ending when touching the target.
+    /// We want to keep track of each travel to the target and average it in the end.
+    /// </summary>
+    public void AddMetrics()
+    {
+        // Possible for the target to spawn under the agent -> no steps between targets
+        if (m_stepsToTarget != 0)
+        {
+            m_targetsCollected += 1;
+            float distTravelled = m_initDistanceToTarget;
+            m_speedSum += distTravelled / m_stepsToTarget;
+            m_successRateSum += 1;
+            m_totalSteps += m_stepsToTarget;
+        }
+
+        m_stepsToTarget = 0;
+    }
+
+    public void LogMetrics()
+    {
+        //Metrics logging
+        float distTravelled = m_initDistanceToTarget - m_lastDistanceToTarget;
+
+        // Ignore last target metrics IF ends due to reaching max number of steps and episode doesnt end with touching the target
+        // Could have some issues or bias?
+        if (m_totalSteps == MaxStep)
+        {
+            // TODO?
+        }
+
+        m_speedSum += distTravelled / m_stepsToTarget;
+        m_successRateSum += distTravelled / m_initDistanceToTarget;
+        m_totalSteps += m_stepsToTarget;
+
+        float avgSpeed = m_speedSum / (m_targetsCollected + 1);
+        float avgSuccessRate = m_successRateSum / (m_targetsCollected + 1);
+        float avgSteps = m_totalSteps / (m_targetsCollected + 1);
+
+        metricsLogger.Record(m_episode, m_totalSteps, m_successRateSum, m_speedSum, m_targetsCollected);
     }
 }
