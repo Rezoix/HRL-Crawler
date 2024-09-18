@@ -371,6 +371,7 @@ class HRLUnityEnv(BetterUnity3DEnv):
         soft_horizon: bool = False,
         timescale: int = 1.0,
         high_level_steps: int = 25,
+        split_obs: bool = False,
     ):
         super().__init__(
             file_name,
@@ -383,6 +384,7 @@ class HRLUnityEnv(BetterUnity3DEnv):
             timescale,
         )
         self.max_high_level_steps = high_level_steps
+        self.split_obs = split_obs
 
         # Used for indexing dictionaries
         self._agent_ids = set(self.unity_env.get_steps(self.name)[0].agent_id)
@@ -395,14 +397,22 @@ class HRLUnityEnv(BetterUnity3DEnv):
         self.num_high_level_steps = {id: 0 for id in self._agent_ids}
         self.low_level_agent_id = {id: f"low_level_{0}" for id in self._agent_ids}
         self.cur_obs = {id: None for id in self._agent_ids}
+        self.high_level_rewards = {id: 0 for id in self._agent_ids}
 
         if not self.soft_horizon:
             self.unity_env.reset()
         _, _, _, _, infos = self._get_step_results()
 
-        obs = {
-            f"high_level_{id}": self.cur_obs[id][1] for id in self._agent_ids if self.cur_obs[id] is not None
-        }
+        if self.split_obs:
+            obs = {
+                f"high_level_{id}": (np.concatenate((self.cur_obs[id][1][0:13], self.cur_obs[id][1][31:52])),)
+                for id in self._agent_ids
+                if self.cur_obs[id] is not None
+            }
+        else:
+            obs = {
+                f"high_level_{id}": self.cur_obs[id] for id in self._agent_ids if self.cur_obs[id] is not None
+            }
 
         # print("Reset Done")
 
@@ -442,16 +452,24 @@ class HRLUnityEnv(BetterUnity3DEnv):
                 agent_id = int(key.split("_")[-1])
                 self.current_goal[agent_id] = action
 
+                self.high_level_rewards[agent_id] = 0
+
                 self.steps_remaining_at_level[agent_id] = self.max_high_level_steps
                 self.num_high_level_steps[agent_id] += 1
-                self.low_level_agent_id[
-                    agent_id
-                ] = f"low_level_{agent_id}_{self.num_high_level_steps[agent_id]}"
-                # f"low_level_{agent_id}_{self.num_high_level_steps[agent_id]}"
-
-                obs[self.low_level_agent_id[agent_id]] = (self.cur_obs[agent_id][0],) + (
-                    self.current_goal[agent_id],
+                self.low_level_agent_id[agent_id] = (
+                    f"low_level_{agent_id}_{self.num_high_level_steps[agent_id]}"
                 )
+                # f"low_level_{agent_id}_{self.num_high_level_steps[agent_id]}"
+                if self.split_obs:
+                    obs[self.low_level_agent_id[agent_id]] = (
+                        self.cur_obs[agent_id][0],
+                        self.cur_obs[agent_id][1][13:52],
+                        self.current_goal[agent_id],
+                    )
+                else:
+                    obs[self.low_level_agent_id[agent_id]] = self.cur_obs[agent_id] + (
+                        self.current_goal[agent_id],
+                    )
                 # [self.cur_obs[agent_id], self.current_goal[agent_id]]
                 rew[self.low_level_agent_id[agent_id]] = 0
                 terminateds[self.low_level_agent_id[agent_id]] = False
@@ -535,9 +553,13 @@ class HRLUnityEnv(BetterUnity3DEnv):
                 os = tuple(o[idx] for o in decision_steps.obs)
                 os = os[0] if len(os) == 1 else os
                 self.cur_obs[agent_id] = os
-                obs[key] = (os[0],) + (self.current_goal[agent_id],)
+                if self.split_obs:
+                    obs[key] = (os[0], os[1][13:52], self.current_goal[agent_id])
+                else:
+                    obs[key] = os + (self.current_goal[agent_id],)
 
                 rewards[key] = decision_steps.reward[idx] + decision_steps.group_reward[idx]
+                self.high_level_rewards[agent_id] += rewards[key]
                 i += 1
 
                 if self.steps_remaining_at_level[agent_id] == 0:
@@ -545,8 +567,15 @@ class HRLUnityEnv(BetterUnity3DEnv):
                     terminateds[key] = True
 
                     key_high = f"high_level_{agent_id}"
-                    obs[key_high] = self.cur_obs[agent_id][1]
-                    rewards[key_high] = rewards[key]
+                    if self.split_obs:
+                        obs[key_high] = (
+                            np.concatenate(
+                                (self.cur_obs[agent_id][1][0:13], self.cur_obs[agent_id][1][31:52])
+                            ),
+                        )
+                    else:
+                        obs[key_high] = self.cur_obs[agent_id]
+                    rewards[key_high] = rewards[key]  # self.high_level_rewards[agent_id]
                 else:
                     terminateds[key] = False
 
@@ -560,12 +589,22 @@ class HRLUnityEnv(BetterUnity3DEnv):
                     os = tuple(o[idx] for o in terminal_steps.obs)
                     os = os[0] if len(os) == 1 else os
                     self.cur_obs[agent_id] = os
-                    obs[key] = (os[0],) + (self.current_goal[agent_id],)
+                    if self.split_obs:
+                        obs[key] = (os[0], os[1][13:52], self.current_goal[agent_id])
+                    else:
+                        obs[key] = os + (self.current_goal[agent_id],)
                 rewards[key] = terminal_steps.reward[idx] + terminal_steps.group_reward[idx]
+                self.high_level_rewards[agent_id] += rewards[key]
 
                 key_high = f"high_level_{agent_id}"
-                obs[key_high] = self.cur_obs[agent_id][1]
-                rewards[key_high] = rewards[key]
+                if self.split_obs:
+                    obs[key_high] = (
+                        np.concatenate((self.cur_obs[agent_id][1][0:13], self.cur_obs[agent_id][1][31:52])),
+                    )
+                else:
+                    obs[key_high] = self.cur_obs[agent_id]
+                rewards[key_high] = rewards[key]  # self.high_level_rewards[agent_id]
+                # terminateds[key_high] = True
 
         # Only use dones if all agents are done, then we should do a reset.
         # if False not in terminateds.values():

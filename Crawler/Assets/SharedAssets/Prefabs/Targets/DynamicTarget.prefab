@@ -149,6 +149,7 @@ MonoBehaviour:
   tagToDetect: agent
   spawnRadius: 40
   respawnIfTouched: 1
+  randomSeed: 1
   respawnIfFallsOffPlatform: 1
   fallDistance: 5
   onTriggerEnterEvent:
